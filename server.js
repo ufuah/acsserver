@@ -5,6 +5,10 @@ import stocksRoutes from "./routes/stocksRoutes.js";
 import salesRoutes from "./routes/salesRoutes.js";
 import authRoutes from "./routes/authRoues.js"
 import cookieParser from 'cookie-parser'
+import dotenv from "dotenv";
+
+// Load environment variables from .env file
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
