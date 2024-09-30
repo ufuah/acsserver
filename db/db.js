@@ -39,14 +39,18 @@
 
 
 import mysql from "mysql2";
+import dotenv from "dotenv";
 
-// Use mysql2 for better compatibility with MySQL 8.0
+// Load environment variables from .env file
+dotenv.config();
+
+// Use environment variables for MySQL connection
 const connection = mysql.createConnection({
-  host: "p4w8cckgwscok0c0coccowsk",   // Internal host from Coolify
-  user: "mysql",                      // MySQL user
-  password: "nK0BEMPe7UBe6auXbR7ycPqS4X0c46sPMlIGAcVB2mmAc99gXZ3UqfG23V20ai21",  // MySQL password
-  database: "default",                // Database name (default in your case)
-  port: 3306,                         // MySQL port (3306 for internal MySQL)
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  port: process.env.DB_PORT || 3306,  // Default to 3306 if not specified
 });
 
 connection.connect((err) => {
@@ -55,3 +59,4 @@ connection.connect((err) => {
 });
 
 export default connection;
+
