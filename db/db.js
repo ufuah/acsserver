@@ -38,15 +38,15 @@
 
 
 
-import mysql from "mysql";
+import mysql from "mysql2";
 
-// Update with internal MySQL URL details from Coolify
+// Use mysql2 for better compatibility with MySQL 8.0
 const connection = mysql.createConnection({
   host: "p4w8cckgwscok0c0coccowsk",   // Internal host from Coolify
   user: "mysql",                      // MySQL user
   password: "nK0BEMPe7UBe6auXbR7ycPqS4X0c46sPMlIGAcVB2mmAc99gXZ3UqfG23V20ai21",  // MySQL password
   database: "default",                // Database name (default in your case)
-  port: 3306,                         // MySQL port (3306 for internal MySQL, not 5432)
+  port: 3306,                         // MySQL port (3306 for internal MySQL)
 });
 
 connection.connect((err) => {
