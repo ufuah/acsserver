@@ -42,6 +42,7 @@ app.use("/api/stocks", stocksRoutes);
 app.use("/api/sales", salesRoutes);
 app.use("/api/auth", authRoutes);
 
-app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
+
+app.listen(PORT, () => {
+  console.log(`Server running at http://localhost:${PORT}`);
 });
