@@ -809,6 +809,272 @@ const updateStockAfterSale = async (item_id, quantity_purchased) => {
 //   });
 // };
 
+// export const addSale = (req, res) => {
+//   const {
+//     date,
+//     customer_name,
+//     brand,
+//     bank_or_pos,
+//     supplied_by,
+//     status,
+//     number,
+//     items,
+//     total_sale_value,
+//   } = req.body;
+
+//   const itemsDetails = items || [];
+
+//   if (
+//     !date ||
+//     !customer_name ||
+//     !number ||
+//     !brand ||
+//     !bank_or_pos ||
+//     itemsDetails.length === 0
+//   ) {
+//     return res.status(400).json({
+//       error: "Please fill out all required fields and add at least one item.",
+//     });
+//   }
+
+//   const sales_id = uuidv4();
+//   let processedItems = 0;
+//   const totalItems = itemsDetails.length;
+
+//   // Check if customer with the same number exists
+//   const customerNumberQuery = `
+//     SELECT customer_id, customer_name 
+//     FROM customers 
+//     WHERE number = ?
+//   `;
+//   db.query(customerNumberQuery, [number], function (error, numberResults) {
+//     if (error) {
+//       console.error("Error checking customer by number:", error);
+//       return res
+//         .status(500)
+//         .json({ error: "Error checking customer by number." });
+//     }
+
+//     // Check if customer with the same name exists
+//     const customerNameQuery = `
+//       SELECT customer_id, number 
+//       FROM customers 
+//       WHERE customer_name = ?
+//     `;
+//     db.query(customerNameQuery, [customer_name], function (error, nameResults) {
+//       if (error) {
+//         console.error("Error checking customer by name:", error);
+//         return res
+//           .status(500)
+//           .json({ error: "Error checking customer by name." });
+//       }
+
+//       if (nameResults.length > 0) {
+//         // Customer name exists, but we need to check the number
+//         const existingCustomer = nameResults[0];
+
+//         if (existingCustomer.number !== number) {
+//           // Name exists but number does not match
+//           return res.status(400).json({
+//             error: `The customer name "${customer_name}" exists but the phone number provided does not match the existing record. The associated number is "${existingCustomer.number}". Please provide the correct phone number.`,
+//           });
+//         } else {
+//           // The name and number match the same customer, process the sale
+//           processSale(existingCustomer.customer_id);
+//         }
+//       } else if (numberResults.length > 0) {
+//         // Number exists, but the name is different
+//         const existingCustomerByNumber = numberResults[0];
+//         return res.status(400).json({
+//           error: `The phone number "${number}" is already associated with another customer: "${existingCustomerByNumber.customer_name}". Please use a different phone number.`,
+//         });
+//       } else {
+//         // No match found, insert the new customer
+//         const customer_id = uuidv4(); // Generate a new customer_id
+
+//         const insertCustomerQuery = `
+//           INSERT INTO customers (customer_id, customer_name, number, created_at)
+//           VALUES (?, ?, ?, ?)
+//         `;
+//         const customerValues = [customer_id, customer_name, number, new Date()];
+
+//         db.query(insertCustomerQuery, customerValues, (err) => {
+//           if (err) {
+//             console.error("Error inserting new customer:", err);
+//             return res
+//               .status(500)
+//               .json({ error: "Error adding new customer." });
+//           }
+
+//           processSale(customer_id);
+//         });
+//       }
+//     });
+
+//     // Function to process sale for each item
+//     function processSale(customer_id) {
+//       itemsDetails.forEach((item) => {
+//         const query = `
+//           SELECT id, closing_stock, opening_qty 
+//           FROM stock 
+//           WHERE description = ? AND record_type = 'day_to_day'
+//         `;
+//         db.query(query, [item.item], function (error, results) {
+//           if (error) {
+//             console.error("Error fetching item from stock:", error);
+//             return res
+//               .status(500)
+//               .json({ error: "Error fetching item from stock." });
+//           }
+
+//           if (results.length > 0) {
+//             const item_id = results[0].id;
+//             const itemStock = results[0];
+
+//             // Log stock details retrieved
+//             console.log(
+//               `Item: ${item.item}, Closing Stock: ${itemStock.closing_stock}, Opening Qty: ${itemStock.opening_qty}`
+//             );
+
+//             // Check if the quantity requested exceeds available stock
+//             if (item.quantity_purchased > itemStock.closing_stock) {
+//               return res.status(400).json({
+//                 error: `Insufficient stock for item "${item.item}". Available stock is ${itemStock.closing_stock}, but the requested quantity is ${item.quantity_purchased}.`,
+//               });
+//             }
+
+//             // Check if the quantity requested exceeds available stock
+//             // if (item.quantity_purchased > itemStock.closing_stock) {
+//             //   return res.status(400).json({
+//             //     error: `Insufficient stock for item "${item.item}". Available stock is ${itemStock.closing_stock}, but the requested quantity is ${item.quantity_purchased}.`,
+//             //   });
+//             // } else if (item.quantity_purchased === itemStock.closing_stock) {
+//             //   return res.status(200).json({
+//             //     warning: `Warning: The requested quantity for item "${item.item}" is equal to the available stock. Proceed with caution.`,
+//             //   });
+//             // }
+
+//             if (status === "supplied") {
+//               // Update stock quantities
+//               const updatedClosingStock =
+//                 itemStock.closing_stock - item.quantity_purchased;
+//               const updatedOpeningStock =
+//                 itemStock.opening_qty - item.quantity_purchased;
+
+//               // Log stock values before update
+//               console.log(`Updating Stock for Item: ${item.item}`);
+//               console.log(
+//                 `Updated Closing Stock: ${updatedClosingStock}, Updated Opening Qty: ${updatedOpeningStock}`
+//               );
+
+//               const updateStockQuery = `
+//                 UPDATE stock 
+//                 SET closing_stock = ?, opening_qty = ? 
+//                 WHERE id = ?
+//               `;
+//               db.query(
+//                 updateStockQuery,
+//                 [updatedClosingStock, updatedOpeningStock, item_id],
+//                 (err) => {
+//                   if (err) {
+//                     console.error("Error updating stock:", err);
+//                     return res
+//                       .status(500)
+//                       .json({ error: "Error updating stock." });
+//                   }
+
+//                   // Log successful update
+//                   console.log(
+//                     `Stock updated successfully for Item: ${item.item}`
+//                   );
+//                   insertSaleRecord(item_id, customer_id, item);
+//                 }
+//               );
+//             } else {
+//               // Process sale if status is not 'supplied'
+//               insertSaleRecord(item_id, customer_id, item);
+//             }
+//           } else {
+//             console.error(
+//               "Item not found in stock with 'day_to_day' record_type"
+//             );
+//             return res.status(400).json({
+//               error: "Item not found in stock with 'day_to_day' record_type.",
+//             });
+//           }
+//         });
+//       });
+//     }
+
+//     // Function to insert sale record
+//     function insertSaleRecord(item_id, customer_id, item) {
+//       const insertQuery = `
+//         INSERT INTO sales (
+//           sales_id,
+//           date,
+//           customer_name,
+//           customer_id,
+//           item,
+//           item_id,
+//           amount_per_item,
+//           quantity_purchased,
+//           amount_paid,
+//           brand,
+//           bank_or_pos,
+//           bank_name,
+//           number,
+//           supplied_by,
+//           status,
+//           total_sale_value,
+//           created_at,
+//           transaction_type
+//         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+//       `;
+
+//       const amount_paid = item.amount_per_item * item.quantity_purchased;
+//       const values = [
+//         sales_id,
+//         date,
+//         customer_name,
+//         customer_id,
+//         item.item,
+//         item_id,
+//         item.amount_per_item,
+//         item.quantity_purchased,
+//         amount_paid,
+//         brand,
+//         bank_or_pos,
+//         null,
+//         number,
+//         supplied_by,
+//         status,
+//         total_sale_value,
+//         new Date(),
+//         "sales",
+//       ];
+
+//       db.query(insertQuery, values, (err) => {
+//         if (err) {
+//           console.error("Error inserting sale data:", err);
+//           return res
+//             .status(500)
+//             .json({ error: "An error occurred while submitting the sale." });
+//         }
+//         processedItems++;
+
+//         // Check if all items have been processed
+//         if (processedItems === totalItems) {
+//           // Send the sales_id along with the success message
+//           return res.status(201).json({
+//             message: "Sale added successfully!",
+//             sales_id: sales_id, // Send the sales_id to the frontend
+//           });
+//         }
+//       });
+//     }
+//   });
+// };
+
 export const addSale = (req, res) => {
   const {
     date,
@@ -943,38 +1209,23 @@ export const addSale = (req, res) => {
               });
             }
 
-            // Check if the quantity requested exceeds available stock
-            // if (item.quantity_purchased > itemStock.closing_stock) {
-            //   return res.status(400).json({
-            //     error: `Insufficient stock for item "${item.item}". Available stock is ${itemStock.closing_stock}, but the requested quantity is ${item.quantity_purchased}.`,
-            //   });
-            // } else if (item.quantity_purchased === itemStock.closing_stock) {
-            //   return res.status(200).json({
-            //     warning: `Warning: The requested quantity for item "${item.item}" is equal to the available stock. Proceed with caution.`,
-            //   });
-            // }
-
             if (status === "supplied") {
-              // Update stock quantities
-              const updatedClosingStock =
-                itemStock.closing_stock - item.quantity_purchased;
+              // Update only opening_qty, as closing_stock is a generated column
               const updatedOpeningStock =
                 itemStock.opening_qty - item.quantity_purchased;
 
               // Log stock values before update
               console.log(`Updating Stock for Item: ${item.item}`);
-              console.log(
-                `Updated Closing Stock: ${updatedClosingStock}, Updated Opening Qty: ${updatedOpeningStock}`
-              );
+              console.log(`Updated Opening Qty: ${updatedOpeningStock}`);
 
               const updateStockQuery = `
                 UPDATE stock 
-                SET closing_stock = ?, opening_qty = ? 
+                SET opening_qty = ? 
                 WHERE id = ?
               `;
               db.query(
                 updateStockQuery,
-                [updatedClosingStock, updatedOpeningStock, item_id],
+                [updatedOpeningStock, item_id],
                 (err) => {
                   if (err) {
                     console.error("Error updating stock:", err);
@@ -1074,6 +1325,7 @@ export const addSale = (req, res) => {
     }
   });
 };
+
 
 export const getSales = (req, res) => {
   const query = "SELECT * FROM sales ORDER BY created_at DESC";
