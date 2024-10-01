@@ -587,7 +587,7 @@ export const login = (req, res) => {
       res.cookie("accessToken", accessToken, {
         httpOnly: true,
         secure: true, // Only set to true if using HTTPS
-        sameSite: "None", // Required for cross-origin cookies
+        sameSite: "Lax", // Required for cross-origin cookies
         path: "/",
         maxAge: 15 * 60 * 1000,
       });
@@ -596,7 +596,7 @@ export const login = (req, res) => {
       res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
         secure: true, // Only set to true if using HTTPS
-        sameSite: "None", // Required for cross-origin cookies
+        sameSite: "Lax", // Required for cross-origin cookies
         path: "/",
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
