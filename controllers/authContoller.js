@@ -532,119 +532,158 @@ import db from "../db/db.js"; // Adjust path as necessary
 //   });
 // };
 
+// export const login = (req, res) => {
+//   const { username, password } = req.body;
+
+//   console.log(`Login attempt for user: ${username}`);
+
+//   if (!username || !password) {
+//     console.warn("Login failed: Username and password are required");
+//     return res
+//       .status(400)
+//       .json({ message: "Username and password are required" });
+//   }
+
+//   // Query the database for the user
+//   db.query(
+//     "SELECT * FROM users WHERE username = ?",
+//     [username],
+//     (err, results) => {
+//       if (err) {
+//         console.error("Database error:", err.message);
+//         return res
+//           .status(500)
+//           .json({ message: "Database error", error: err.message });
+//       }
+
+//       if (results.length === 0) {
+//         console.warn(`Login failed: Invalid credentials for user: ${username}`);
+//         return res.status(401).json({ message: "Invalid credentials" });
+//       }
+
+//       const user = results[0];
+
+//       // Check if password matches
+//       if (password !== user.password) {
+//         console.warn(`Login failed: Invalid password for user: ${username}`);
+//         return res.status(401).json({ message: "Invalid credentials" });
+//       }
+
+//       // Generate short-lived access token
+//       const accessToken = jwt.sign(
+//         { id: user.id, username: user.username, role: user.role },
+//         process.env.JWT_SECRET || "accessSecret",
+//         { expiresIn: "15m" }
+//       );
+
+//       // Generate long-lived refresh token
+//       const refreshToken = jwt.sign(
+//         { id: user.id, username: user.username, role: user.role },
+//         process.env.JWT_REFRESH_SECRET || "refreshSecret",
+//         { expiresIn: "7d" }
+//       );
+
+//       // Set access token in httpOnly cookie
+//       res.cookie("accessToken", accessToken, {
+//         httpOnly: true,
+//         secure: true, // Only set to true if using HTTPS
+//         sameSite: "Lax", // Required for cross-origin cookies
+//         path: "/",
+//         maxAge: 15 * 60 * 1000,
+//       });
+
+//       // Set refresh token in httpOnly cookie
+//       res.cookie("refreshToken", refreshToken, {
+//         httpOnly: true,
+//         secure: true, // Only set to true if using HTTPS
+//         sameSite: "Lax", // Required for cross-origin cookies
+//         path: "/",
+//         maxAge: 7 * 24 * 60 * 60 * 1000,
+//       });
+
+//       console.log(`Login successful for user: ${username}`);
+
+//       res.json({
+//         message: "Login successful",
+//         user: { id: user.id, username: user.username, role: user.role },
+//       });
+//     }
+//   );
+// };
+
 export const login = (req, res) => {
   const { username, password } = req.body;
 
-  console.log(`Login attempt for user: ${username}`);
-
   if (!username || !password) {
-    console.warn("Login failed: Username and password are required");
-    return res
-      .status(400)
-      .json({ message: "Username and password are required" });
+    return res.status(400).json({ message: "Username and password are required" });
   }
 
-  // Query the database for the user
-  db.query(
-    "SELECT * FROM users WHERE username = ?",
-    [username],
-    (err, results) => {
-      if (err) {
-        console.error("Database error:", err.message);
-        return res
-          .status(500)
-          .json({ message: "Database error", error: err.message });
-      }
-
-      if (results.length === 0) {
-        console.warn(`Login failed: Invalid credentials for user: ${username}`);
-        return res.status(401).json({ message: "Invalid credentials" });
-      }
-
-      const user = results[0];
-
-      // Check if password matches
-      if (password !== user.password) {
-        console.warn(`Login failed: Invalid password for user: ${username}`);
-        return res.status(401).json({ message: "Invalid credentials" });
-      }
-
-      // Generate short-lived access token
-      const accessToken = jwt.sign(
-        { id: user.id, username: user.username, role: user.role },
-        process.env.JWT_SECRET || "accessSecret",
-        { expiresIn: "15m" }
-      );
-
-      // Generate long-lived refresh token
-      const refreshToken = jwt.sign(
-        { id: user.id, username: user.username, role: user.role },
-        process.env.JWT_REFRESH_SECRET || "refreshSecret",
-        { expiresIn: "7d" }
-      );
-
-      // Set access token in httpOnly cookie
-      res.cookie("accessToken", accessToken, {
-        httpOnly: true,
-        secure: true, // Only set to true if using HTTPS
-        sameSite: "Lax", // Required for cross-origin cookies
-        path: "/",
-        maxAge: 15 * 60 * 1000,
-      });
-
-      // Set refresh token in httpOnly cookie
-      res.cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: true, // Only set to true if using HTTPS
-        sameSite: "Lax", // Required for cross-origin cookies
-        path: "/",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      });
-
-      console.log(`Login successful for user: ${username}`);
-
-      res.json({
-        message: "Login successful",
-        user: { id: user.id, username: user.username, role: user.role },
-      });
+  db.query("SELECT * FROM users WHERE username = ?", [username], (err, results) => {
+    if (err || results.length === 0 || password !== results[0].password) {
+      return res.status(401).json({ message: "Invalid credentials" });
     }
-  );
+
+    const user = results[0];
+
+    // Generate tokens
+    const accessToken = jwt.sign({ id: user.id, username: user.username, role: user.role }, process.env.JWT_SECRET || 'accessSecret', { expiresIn: '15m' });
+    const refreshToken = jwt.sign({ id: user.id, username: user.username, role: user.role }, process.env.JWT_REFRESH_SECRET || 'refreshSecret', { expiresIn: '7d' });
+
+    // Set cookies
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Lax",
+      path: "/",
+      maxAge: 15 * 60 * 1000,
+    });
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Lax",
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    res.json({ message: "Login successful", user: { id: user.id, username: user.username, role: user.role } });
+  });
 };
 
-export const refreshToken = (req, res) => {
-  const refreshToken = req.cookies.refreshToken;
 
-  if (!refreshToken) {
-    return res.status(401).json({ message: "Refresh token not found" });
-  }
+// export const refreshToken = (req, res) => {
+//   const refreshToken = req.cookies.refreshToken;
 
-  jwt.verify(
-    refreshToken,
-    process.env.JWT_REFRESH_SECRET || "refreshSecret",
-    (err, decoded) => {
-      if (err) {
-        return res.status(403).json({ message: "Invalid refresh token" });
-      }
+//   if (!refreshToken) {
+//     return res.status(401).json({ message: "Refresh token not found" });
+//   }
 
-      // Generate new access token
-      const newAccessToken = jwt.sign(
-        { id: decoded.id, username: decoded.username, role: decoded.role },
-        process.env.JWT_SECRET || "accessSecret",
-        { expiresIn: "15m" }
-      );
+//   jwt.verify(
+//     refreshToken,
+//     process.env.JWT_REFRESH_SECRET || "refreshSecret",
+//     (err, decoded) => {
+//       if (err) {
+//         return res.status(403).json({ message: "Invalid refresh token" });
+//       }
 
-      res.cookie("accessToken", newAccessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "Strict",
-        path: "/",
-        maxAge: 15 * 60 * 1000, // 15 minutes
-      });
+//       // Generate new access token
+//       const newAccessToken = jwt.sign(
+//         { id: decoded.id, username: decoded.username, role: decoded.role },
+//         process.env.JWT_SECRET || "accessSecret",
+//         { expiresIn: "15m" }
+//       );
 
-      res.json({ message: "Access token refreshed" });
-    }
-  );
-};
+//       res.cookie("accessToken", newAccessToken, {
+//         httpOnly: true,
+//         secure: process.env.NODE_ENV === "production",
+//         sameSite: "Strict",
+//         path: "/",
+//         maxAge: 15 * 60 * 1000, // 15 minutes
+//       });
+
+//       res.json({ message: "Access token refreshed" });
+//     }
+//   );
+// };
 
 // export const refreshToken = (req, res) => {
 //   const refreshToken = req.cookies.refreshToken;
@@ -731,6 +770,55 @@ export const refreshToken = (req, res) => {
 //     }
 //   );
 // };
+
+
+export const refreshToken = (req, res) => {
+  const { refreshToken } = req.cookies;
+
+  if (!refreshToken) {
+    return res.status(401).json({ message: "No refresh token provided" });
+  }
+
+  jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET || 'refreshSecret', (err, decoded) => {
+    if (err) {
+      return res.status(403).json({ message: "Invalid refresh token" });
+    }
+
+    // Generate new access token
+    const newAccessToken = jwt.sign(
+      { id: decoded.id, username: decoded.username, role: decoded.role },
+      process.env.JWT_SECRET || 'accessSecret',
+      { expiresIn: '15m' }
+    );
+
+    // Optionally, refresh refreshToken as well
+    const newRefreshToken = jwt.sign(
+      { id: decoded.id, username: decoded.username, role: decoded.role },
+      process.env.JWT_REFRESH_SECRET || 'refreshSecret',
+      { expiresIn: '7d' }
+    );
+
+    // Set cookies
+    res.cookie("accessToken", newAccessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+      path: "/",
+      maxAge: 15 * 60 * 1000, // 15 minutes
+    });
+
+    res.cookie("refreshToken", newRefreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    res.json({ message: "Access token refreshed" });
+  });
+};
+
 
 export const signUp = (req, res) => {
   const { username, password, role } = req.body;
