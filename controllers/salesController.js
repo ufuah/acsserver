@@ -3007,6 +3007,173 @@ export const updateSaleStatus = (req, res) => {
   });
 };
 
+// export const Return = (req, res) => {
+//   const { customer, items } = req.body;
+//   const { customer_name, number, date } = customer;
+
+//   // Log the request body to check the incoming data
+//   console.log("Request Body:", req.body);
+
+//   if (!customer_name || !number || !date || !items || items.length === 0) {
+//     return res.status(400).json({ error: "Missing required fields" });
+//   }
+
+//   db.beginTransaction((err) => {
+//     if (err) {
+//       console.error("Transaction start error:", err);
+//       return res.status(500).json({ error: err.message });
+//     }
+
+//     const checkCustomerQuery = `
+//       SELECT customer_id FROM customers WHERE customer_name = ? AND number = ?
+//     `;
+//     db.query(
+//       checkCustomerQuery,
+//       [customer_name, number],
+//       (err, customerResults) => {
+//         if (err) {
+//           console.error("Error executing checkCustomerQuery:", err);
+//           return db.rollback(() =>
+//             res.status(500).json({ error: err.message })
+//           );
+//         }
+
+//         let customerId;
+//         if (customerResults.length === 0) {
+//           // Customer does not exist, insert them
+//           const insertCustomerQuery = `
+//           INSERT INTO customers (customer_id, customer_name, number, created_at) 
+//           VALUES (UUID(), ?, ?, NOW())
+//         `;
+//           db.query(insertCustomerQuery, [customer_name, number], (err) => {
+//             if (err) {
+//               console.error("Error inserting customer:", err);
+//               return db.rollback(() =>
+//                 res.status(500).json({ error: err.message })
+//               );
+//             }
+
+//             const fetchCustomerIdQuery = `SELECT customer_id FROM customers WHERE number = ?`;
+//             db.query(
+//               fetchCustomerIdQuery,
+//               [number],
+//               (err, newCustomerResult) => {
+//                 if (err) {
+//                   console.error("Error fetching customer ID:", err);
+//                   return db.rollback(() =>
+//                     res.status(500).json({ error: err.message })
+//                   );
+//                 }
+
+//                 customerId = newCustomerResult[0].customer_id;
+//                 processItems(customerId);
+//               }
+//             );
+//           });
+//         } else {
+//           // Customer exists, use their ID
+//           customerId = customerResults[0].customer_id;
+//           processItems(customerId);
+//         }
+//       }
+//     );
+
+//     const processItems = (customerId) => {
+//       const returnId = uuidv4(); // Generate returnId once for all items
+
+//       let itemProcessed = 0;
+
+//       const processNextItem = () => {
+//         if (itemProcessed >= items.length) {
+//           db.commit((err) => {
+//             if (err) {
+//               console.error("Transaction commit error:", err);
+//               return db.rollback(() =>
+//                 res.status(500).json({ error: "Error committing transaction." })
+//               );
+//             }
+
+//             // Return success message along with returnId
+//             return res.status(201).json({
+//               message: "Return added successfully.",
+//               return_Id: returnId,
+//             });
+//           });
+//           return;
+//         }
+
+//         const item = items[itemProcessed];
+//         const { item: itemName, qty } = item;
+
+//         const checkStockQuery = `
+//           SELECT id, closing_stock, opening_qty
+//           FROM stock
+//           WHERE description = ? AND record_type = 'day_to_day'
+//         `;
+//         db.query(checkStockQuery, [itemName], (err, stockResults) => {
+//           if (err) {
+//             console.error("Error executing checkStockQuery:", err);
+//             return db.rollback(() =>
+//               res.status(500).json({ error: err.message })
+//             );
+//           }
+
+//           if (stockResults.length === 0) {
+//             console.error(
+//               `Item '${itemName}' not found in stock or does not match 'day_to_day' record type.`
+//             );
+//             return db.rollback(() =>
+//               res.status(400).json({
+//                 error: `Item '${itemName}' not found in stock or does not match 'day_to_day' record type.`,
+//               })
+//             );
+//           }
+
+//           const stockItem = stockResults[0];
+//           const { id } = stockItem;
+
+//           const insertReturnQuery = `
+//             INSERT INTO returns (return_id, date, customer_id, customer_name, item_id, item, quantity)
+//             VALUES (?, ?, ?, ?, ?, ?, ?)
+//           `;
+//           db.query(
+//             insertReturnQuery,
+//             [returnId, date, customerId, customer_name, id, itemName, qty],
+//             (err) => {
+//               if (err) {
+//                 console.error("Error executing insertReturnQuery:", err);
+//                 return db.rollback(() =>
+//                   res.status(500).json({ error: err.message })
+//                 );
+//               }
+
+//               const updateStockQuery = `
+//               UPDATE stock
+//               SET closing_stock = closing_stock + ?, opening_qty = opening_qty + ?
+//               WHERE id = ?
+//             `;
+//               db.query(updateStockQuery, [qty, qty, id], (err) => {
+//                 if (err) {
+//                   console.error("Error executing updateStockQuery:", err);
+//                   return db.rollback(() =>
+//                     res.status(500).json({ error: err.message })
+//                   );
+//                 }
+
+//                 itemProcessed++;
+//                 processNextItem();
+//               });
+//             }
+//           );
+//         });
+//       };
+
+//       processNextItem();
+//     };
+//   });
+// };
+
+
 export const Return = (req, res) => {
   const { customer, items } = req.body;
   const { customer_name, number, date } = customer;
@@ -3147,12 +3314,13 @@ export const Return = (req, res) => {
                 );
               }
 
+              // Updated stock query: remove 'closing_stock' from the update
               const updateStockQuery = `
-              UPDATE stock
-              SET closing_stock = closing_stock + ?, opening_qty = opening_qty + ?
-              WHERE id = ?
-            `;
-              db.query(updateStockQuery, [qty, qty, id], (err) => {
+                UPDATE stock
+                SET opening_qty = opening_qty + ?
+                WHERE id = ?
+              `;
+              db.query(updateStockQuery, [qty, id], (err) => {
                 if (err) {
                   console.error("Error executing updateStockQuery:", err);
                   return db.rollback(() =>
@@ -3172,6 +3340,8 @@ export const Return = (req, res) => {
     };
   });
 };
+
+
 
 export const Exchange = (req, res) => {
   const { customer, items } = req.body; // Destructure 'customer' and 'items' from req.body
