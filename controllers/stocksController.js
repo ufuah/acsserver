@@ -1426,9 +1426,96 @@ export const addStock = (req, res) => {
 // };
 
 
+// export const updateStock = (req, res) => {
+//   const { description } = req.params;
+//   const { purchase_qty, standard_price, category } = req.body; // No record_type passed in the body
+
+//   log(`Received request to update stock: ${JSON.stringify(req.body)}`);
+
+//   if (!description || purchase_qty === undefined || standard_price === undefined || !category) {
+//     log("Missing required fields in request");
+//     return res.status(400).json({ error: "Missing required fields" });
+//   }
+
+//   log(`Fetching existing day-to-day stock record for description: ${description} and category: ${category}`);
+  
+//   const queryDayToDay = `
+//     SELECT id, opening_qty, closing_stock, record_type 
+//     FROM stock 
+//     WHERE description = ? AND category = ? AND record_type = 'day_to_day'
+//   `;
+
+//   // Update day-to-day record
+//   db.query(queryDayToDay, [description, category], (error, results) => {
+//     if (error) {
+//       log(`Error fetching stock records: ${error.message}`);
+//       return res.status(500).json({ error: "Database error: " + error.message });
+//     }
+
+//     if (results.length === 0) {
+//       log(`No day-to-day stock record found for description: ${description} and category: ${category}`);
+//       return res.status(404).json({ error: "Day-to-day stock record not found" });
+//     }
+
+//     const dayToDayRecord = results[0];
+//     const newClosingStock = dayToDayRecord.closing_stock + purchase_qty;
+
+//     if (newClosingStock < 0) {
+//       log("Cannot reduce stock below zero for 'day_to_day'.");
+//       return res.status(400).json({ error: "Cannot reduce stock below zero" });
+//     }
+
+//     const updatedOpeningQty = dayToDayRecord.opening_qty + purchase_qty;
+
+//     const queryUpdateDayToDay = `
+//       UPDATE stock
+//       SET opening_qty = ?, closing_stock = ?, closing_value = ?, category = ?
+//       WHERE id = ?
+//     `;
+
+//     db.query(queryUpdateDayToDay, [
+//       updatedOpeningQty,
+//       newClosingStock,
+//       newClosingStock * standard_price, // Updated closing value based on price
+//       category,
+//       dayToDayRecord.id
+//     ], (err) => {
+//       if (err) {
+//         log(`Error updating day-to-day stock record: ${err.message}`);
+//         return res.status(500).json({ error: "Database error: " + err.message });
+//       }
+//       log(`Day-to-day stock record updated successfully for description: ${description}`);
+//     });
+
+//     // Insert new record for record-keeping
+//     log(`Inserting new record-keeping stock record for description: ${description} and category: ${category}`);
+
+//     const queryInsertRecordKeeping = `
+//       INSERT INTO stock (description, opening_qty, purchase_qty, exchange_qty, return_qty, standard_price, closing_stock, closing_value, category, record_type)
+//       VALUES (?, 0, ?, 0, 0, ?, 0, 0, ?, 'record_keeping')
+//     `;
+
+//     db.query(queryInsertRecordKeeping, [
+//       description,
+//       purchase_qty, // The new purchase quantity
+//       standard_price,
+//       category
+//     ], (err) => {
+//       if (err) {
+//         log(`Error inserting new record-keeping stock record: ${err.message}`);
+//         return res.status(500).json({ error: "Database error: " + err.message });
+//       }
+
+//       log(`New record-keeping stock record inserted successfully for description: ${description}`);
+//       return res.json({ message: "Stock records updated successfully for both day-to-day and record-keeping" });
+//     });
+//   });
+// };
+
+
 export const updateStock = (req, res) => {
   const { description } = req.params;
-  const { purchase_qty, standard_price, category } = req.body; // No record_type passed in the body
+  const { purchase_qty, standard_price, category } = req.body;
 
   log(`Received request to update stock: ${JSON.stringify(req.body)}`);
 
@@ -1440,7 +1527,7 @@ export const updateStock = (req, res) => {
   log(`Fetching existing day-to-day stock record for description: ${description} and category: ${category}`);
   
   const queryDayToDay = `
-    SELECT id, opening_qty, closing_stock, record_type 
+    SELECT id, opening_qty, record_type 
     FROM stock 
     WHERE description = ? AND category = ? AND record_type = 'day_to_day'
   `;
@@ -1458,25 +1545,16 @@ export const updateStock = (req, res) => {
     }
 
     const dayToDayRecord = results[0];
-    const newClosingStock = dayToDayRecord.closing_stock + purchase_qty;
-
-    if (newClosingStock < 0) {
-      log("Cannot reduce stock below zero for 'day_to_day'.");
-      return res.status(400).json({ error: "Cannot reduce stock below zero" });
-    }
-
     const updatedOpeningQty = dayToDayRecord.opening_qty + purchase_qty;
 
     const queryUpdateDayToDay = `
       UPDATE stock
-      SET opening_qty = ?, closing_stock = ?, closing_value = ?, category = ?
+      SET opening_qty = ?, category = ?
       WHERE id = ?
     `;
 
     db.query(queryUpdateDayToDay, [
       updatedOpeningQty,
-      newClosingStock,
-      newClosingStock * standard_price, // Updated closing value based on price
       category,
       dayToDayRecord.id
     ], (err) => {
@@ -1484,30 +1562,31 @@ export const updateStock = (req, res) => {
         log(`Error updating day-to-day stock record: ${err.message}`);
         return res.status(500).json({ error: "Database error: " + err.message });
       }
+
       log(`Day-to-day stock record updated successfully for description: ${description}`);
-    });
 
-    // Insert new record for record-keeping
-    log(`Inserting new record-keeping stock record for description: ${description} and category: ${category}`);
+      // Insert new record for record-keeping
+      log(`Inserting new record-keeping stock record for description: ${description} and category: ${category}`);
 
-    const queryInsertRecordKeeping = `
-      INSERT INTO stock (description, opening_qty, purchase_qty, exchange_qty, return_qty, standard_price, closing_stock, closing_value, category, record_type)
-      VALUES (?, 0, ?, 0, 0, ?, 0, 0, ?, 'record_keeping')
-    `;
+      const queryInsertRecordKeeping = `
+        INSERT INTO stock (description, opening_qty, purchase_qty, exchange_qty, return_qty, standard_price, category, record_type)
+        VALUES (?, 0, ?, 0, 0, ?, ?, 'record_keeping')
+      `;
 
-    db.query(queryInsertRecordKeeping, [
-      description,
-      purchase_qty, // The new purchase quantity
-      standard_price,
-      category
-    ], (err) => {
-      if (err) {
-        log(`Error inserting new record-keeping stock record: ${err.message}`);
-        return res.status(500).json({ error: "Database error: " + err.message });
-      }
+      db.query(queryInsertRecordKeeping, [
+        description,
+        purchase_qty,
+        standard_price,
+        category
+      ], (err) => {
+        if (err) {
+          log(`Error inserting new record-keeping stock record: ${err.message}`);
+          return res.status(500).json({ error: "Database error: " + err.message });
+        }
 
-      log(`New record-keeping stock record inserted successfully for description: ${description}`);
-      return res.json({ message: "Stock records updated successfully for both day-to-day and record-keeping" });
+        log(`New record-keeping stock record inserted successfully for description: ${description}`);
+        return res.json({ message: "Stock records updated successfully for both day-to-day and record-keeping" });
+      });
     });
   });
 };
