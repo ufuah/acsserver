@@ -32,7 +32,7 @@ app.use(
       "http://192.168.240.94:5173",
       "http://192.168.43.194:3000",
       "https://192.168.43.194:3000",
-      "https://admin.e-palateoasis.com/",
+      "https://admin.e-palateoasis.com",
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
