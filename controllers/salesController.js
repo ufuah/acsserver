@@ -589,8 +589,8 @@ const updateStockAfterSale = async (item_id, quantity_purchased) => {
 
 //   // Check if customer with the same number exists
 //   const customerNumberQuery = `
-//     SELECT customer_id, customer_name 
-//     FROM customers 
+//     SELECT customer_id, customer_name
+//     FROM customers
 //     WHERE number = ?
 //   `;
 //   db.query(customerNumberQuery, [number], function (error, numberResults) {
@@ -603,8 +603,8 @@ const updateStockAfterSale = async (item_id, quantity_purchased) => {
 
 //     // Check if customer with the same name exists
 //     const customerNameQuery = `
-//       SELECT customer_id, number 
-//       FROM customers 
+//       SELECT customer_id, number
+//       FROM customers
 //       WHERE customer_name = ?
 //     `;
 //     db.query(customerNameQuery, [customer_name], function (error, nameResults) {
@@ -661,8 +661,8 @@ const updateStockAfterSale = async (item_id, quantity_purchased) => {
 //     function processSale(customer_id) {
 //       itemsDetails.forEach((item) => {
 //         const query = `
-//           SELECT id, closing_stock, opening_qty 
-//           FROM stock 
+//           SELECT id, closing_stock, opening_qty
+//           FROM stock
 //           WHERE description = ? AND record_type = 'day_to_day'
 //         `;
 //         db.query(query, [item.item], function (error, results) {
@@ -696,8 +696,8 @@ const updateStockAfterSale = async (item_id, quantity_purchased) => {
 //               );
 
 //               const updateStockQuery = `
-//                 UPDATE stock 
-//                 SET closing_stock = ?, opening_qty = ? 
+//                 UPDATE stock
+//                 SET closing_stock = ?, opening_qty = ?
 //                 WHERE id = ?
 //               `;
 //               db.query(
@@ -943,7 +943,7 @@ export const addSale = (req, res) => {
               });
             }
 
-             // Check if the quantity requested exceeds available stock
+            // Check if the quantity requested exceeds available stock
             // if (item.quantity_purchased > itemStock.closing_stock) {
             //   return res.status(400).json({
             //     error: `Insufficient stock for item "${item.item}". Available stock is ${itemStock.closing_stock}, but the requested quantity is ${item.quantity_purchased}.`,
@@ -953,7 +953,6 @@ export const addSale = (req, res) => {
             //     warning: `Warning: The requested quantity for item "${item.item}" is equal to the available stock. Proceed with caution.`,
             //   });
             // }
-            
 
             if (status === "supplied") {
               // Update stock quantities
@@ -999,11 +998,9 @@ export const addSale = (req, res) => {
             console.error(
               "Item not found in stock with 'day_to_day' record_type"
             );
-            return res
-              .status(400)
-              .json({
-                error: "Item not found in stock with 'day_to_day' record_type.",
-              });
+            return res.status(400).json({
+              error: "Item not found in stock with 'day_to_day' record_type.",
+            });
           }
         });
       });
@@ -1078,7 +1075,6 @@ export const addSale = (req, res) => {
   });
 };
 
-
 export const getSales = (req, res) => {
   const query = "SELECT * FROM sales ORDER BY created_at DESC";
 
@@ -1096,7 +1092,7 @@ export const getSales = (req, res) => {
 
 // export const getAllSales = (req, res) => {
 //   const query = `
-//     SELECT 
+//     SELECT
 //       s.sales_id AS sale_id,
 //       s.date AS sale_date,
 //       s.customer_id,
@@ -1129,15 +1125,15 @@ export const getSales = (req, res) => {
 
 // export const getAllSales = (req, res) => {
 //   const query = `
-//     SELECT 
-//       s.sales_id, 
-//       s.date, 
-//       s.customer_name, 
-//       s.customer_id, 
-//       s.item, 
-//       s.quantity_purchased, 
-//       s.amount_per_item, 
-//       s.amount_paid, 
+//     SELECT
+//       s.sales_id,
+//       s.date,
+//       s.customer_name,
+//       s.customer_id,
+//       s.item,
+//       s.quantity_purchased,
+//       s.amount_per_item,
+//       s.amount_paid,
 //       s.total_sale_value,
 //       c.number AS customer_number
 //     FROM sales s
@@ -1221,23 +1217,23 @@ export const getAllSales = (req, res) => {
 
     res.status(200).json({
       message: "All sales fetched successfully!",
-      sales: results
+      sales: results,
     });
   });
 };
 
 // export const getAllSales = (req, res) => {
 //   const query = `
-//     SELECT 
-//       'sale' AS record_type, 
-//       s.sales_id AS id, 
-//       s.date, 
-//       s.customer_name, 
-//       s.customer_id, 
-//       s.item, 
-//       s.amount_per_item, 
-//       s.quantity_purchased AS quantity, 
-//       s.amount_paid, 
+//     SELECT
+//       'sale' AS record_type,
+//       s.sales_id AS id,
+//       s.date,
+//       s.customer_name,
+//       s.customer_id,
+//       s.item,
+//       s.amount_per_item,
+//       s.quantity_purchased AS quantity,
+//       s.amount_paid,
 //       s.total_sale_value,
 //       s.brand,
 //       s.bank_or_pos,
@@ -1253,16 +1249,16 @@ export const getAllSales = (req, res) => {
 
 //     UNION ALL
 
-//     SELECT 
-//       'exchange' AS record_type, 
-//       e.exchange_id AS id, 
-//       e.date, 
-//       e.customer_name, 
-//       e.customer_id, 
-//       e.item, 
-//       NULL AS amount_per_item, 
-//       e.quantity, 
-//       NULL AS amount_paid, 
+//     SELECT
+//       'exchange' AS record_type,
+//       e.exchange_id AS id,
+//       e.date,
+//       e.customer_name,
+//       e.customer_id,
+//       e.item,
+//       NULL AS amount_per_item,
+//       e.quantity,
+//       NULL AS amount_paid,
 //       NULL AS total_sale_value,
 //       NULL AS brand,
 //       NULL AS bank_or_pos,
@@ -1278,16 +1274,16 @@ export const getAllSales = (req, res) => {
 
 //     UNION ALL
 
-//     SELECT 
-//       'return' AS record_type, 
-//       r.return_id AS id, 
-//       r.date, 
-//       r.customer_name, 
-//       r.customer_id, 
-//       r.item, 
-//       NULL AS amount_per_item, 
-//       r.quantity, 
-//       NULL AS amount_paid, 
+//     SELECT
+//       'return' AS record_type,
+//       r.return_id AS id,
+//       r.date,
+//       r.customer_name,
+//       r.customer_id,
+//       r.item,
+//       NULL AS amount_per_item,
+//       r.quantity,
+//       NULL AS amount_paid,
 //       NULL AS total_sale_value,
 //       NULL AS brand,
 //       NULL AS bank_or_pos,
@@ -1324,8 +1320,6 @@ export const getAllSales = (req, res) => {
 //     });
 //   });
 // };
-
-
 
 // export const addSale = async (req, res) => {
 //   const {
@@ -1448,91 +1442,90 @@ export const getAllSales = (req, res) => {
 
 // Update sale status from "pending" to "supplied"
 
+// export const updateSaleStatus = (req, res) => {
+//   const { saleId } = req.params;
 
-export const updateSaleStatus = (req, res) => {
-  const { saleId } = req.params;
+//   console.log(`Received request to update sale status for Sale ID: ${saleId}`);
 
-  console.log(`Received request to update sale status for Sale ID: ${saleId}`);
+//   db.beginTransaction((err) => {
+//     if (err) {
+//       console.error("Transaction start error:", err);
+//       return res.status(500).json({ error: "Error starting transaction." });
+//     }
 
-  db.beginTransaction((err) => {
-    if (err) {
-      console.error("Transaction start error:", err);
-      return res.status(500).json({ error: "Error starting transaction." });
-    }
+//     const checkSaleQuery = `
+//       SELECT s.sales_id, s.item_id, s.quantity_purchased, s.status, s.number, st.closing_stock, st.opening_qty
+//       FROM sales s
+//       JOIN stock st ON s.item_id = st.id
+//       WHERE s.sales_id = ? AND s.status = 'pending'
+//     `;
 
-    const checkSaleQuery = `
-      SELECT s.sales_id, s.item_id, s.quantity_purchased, s.status, s.number, st.closing_stock, st.opening_qty
-      FROM sales s
-      JOIN stock st ON s.item_id = st.id
-      WHERE s.sales_id = ? AND s.status = 'pending'
-    `;
+//     db.query(checkSaleQuery, [saleId], (err, saleResults) => {
+//       if (err) {
+//         console.error("Error executing checkSaleQuery:", err);
+//         return db.rollback(() =>
+//           res.status(500).json({ error: "Error checking sale." })
+//         );
+//       }
 
-    db.query(checkSaleQuery, [saleId], (err, saleResults) => {
-      if (err) {
-        console.error("Error executing checkSaleQuery:", err);
-        return db.rollback(() =>
-          res.status(500).json({ error: "Error checking sale." })
-        );
-      }
+//       if (saleResults.length === 0) {
+//         console.error("Sale not found or already supplied.");
+//         return db.rollback(() =>
+//           res.status(400).json({ error: "Sale not found or already supplied." })
+//         );
+//       }
 
-      if (saleResults.length === 0) {
-        console.error("Sale not found or already supplied.");
-        return db.rollback(() =>
-          res.status(400).json({ error: "Sale not found or already supplied." })
-        );
-      }
+//       const sale = saleResults[0];
+//       console.log(`Sale found: ${JSON.stringify(sale)}`);
 
-      const sale = saleResults[0];
-      console.log(`Sale found: ${JSON.stringify(sale)}`);
+//       const updateSaleQuery =
+//         "UPDATE sales SET status = 'supplied' WHERE sales_id = ?";
+//       db.query(updateSaleQuery, [saleId], (err) => {
+//         if (err) {
+//           console.error("Error executing updateSaleQuery:", err);
+//           return db.rollback(() =>
+//             res.status(500).json({ error: "Error updating sale status." })
+//           );
+//         }
 
-      const updateSaleQuery =
-        "UPDATE sales SET status = 'supplied' WHERE sales_id = ?";
-      db.query(updateSaleQuery, [saleId], (err) => {
-        if (err) {
-          console.error("Error executing updateSaleQuery:", err);
-          return db.rollback(() =>
-            res.status(500).json({ error: "Error updating sale status." })
-          );
-        }
+//         const updateStockQuery = `
+//           UPDATE stock
+//           SET opening_qty = opening_qty - ?,
+//               closing_stock = closing_stock - ?
+//           WHERE id = ?
+//         `;
+//         db.query(
+//           updateStockQuery,
+//           [sale.quantity_purchased, sale.quantity_purchased, sale.item_id],
+//           (err) => {
+//             if (err) {
+//               console.error("Error executing updateStockQuery:", err);
+//               return db.rollback(() =>
+//                 res.status(500).json({ error: "Error updating stock." })
+//               );
+//             }
 
-        const updateStockQuery = `
-          UPDATE stock
-          SET opening_qty = opening_qty - ?,
-              closing_stock = closing_stock - ?
-          WHERE id = ?
-        `;
-        db.query(
-          updateStockQuery,
-          [sale.quantity_purchased, sale.quantity_purchased, sale.item_id],
-          (err) => {
-            if (err) {
-              console.error("Error executing updateStockQuery:", err);
-              return db.rollback(() =>
-                res.status(500).json({ error: "Error updating stock." })
-              );
-            }
+//             console.log(
+//               `Stock updated. ${sale.quantity_purchased} units subtracted from item ID ${sale.item_id}.`
+//             );
 
-            console.log(
-              `Stock updated. ${sale.quantity_purchased} units subtracted from item ID ${sale.item_id}.`
-            );
-
-            db.commit((err) => {
-              if (err) {
-                console.error("Transaction commit error:", err);
-                return db.rollback(() =>
-                  res
-                    .status(500)
-                    .json({ error: "Error committing transaction." })
-                );
-              }
-              res.send("Sale status updated to supplied and stock adjusted.");
-            });
-          }
-        );
-      });
-    });
-  });
-};
+//             db.commit((err) => {
+//               if (err) {
+//                 console.error("Transaction commit error:", err);
+//                 return db.rollback(() =>
+//                   res
+//                     .status(500)
+//                     .json({ error: "Error committing transaction." })
+//                 );
+//               }
+//               res.send("Sale status updated to supplied and stock adjusted.");
+//             });
+//           }
+//         );
+//       });
+//     });
+//   });
+// };
 
 // export const Return = (req, res) => {
 //   const { customer, items } = req.body;  // Destructure 'customer' and 'items' from req.body
@@ -2288,7 +2281,7 @@ export const updateSaleStatus = (req, res) => {
 //         if (customerResults.length === 0) {
 //           // Customer does not exist, insert them
 //           const insertCustomerQuery = `
-//           INSERT INTO customers (customer_id, customer_name, number, created_at) 
+//           INSERT INTO customers (customer_id, customer_name, number, created_at)
 //           VALUES (UUID(), ?, ?, NOW())
 //         `;
 //           db.query(
@@ -2427,6 +2420,91 @@ export const updateSaleStatus = (req, res) => {
 //   });
 // };
 
+export const updateSaleStatus = (req, res) => {
+  const { saleId } = req.params;
+
+  console.log(`Received request to update sale status for Sale ID: ${saleId}`);
+
+  db.beginTransaction((err) => {
+    if (err) {
+      console.error("Transaction start error:", err);
+      return res.status(500).json({ error: "Error starting transaction." });
+    }
+
+    const checkSaleQuery = `
+      SELECT s.sales_id, s.item_id, s.quantity_purchased, s.status, s.number, st.opening_qty
+      FROM sales s
+      JOIN stock st ON s.item_id = st.id
+      WHERE s.sales_id = ? AND s.status = 'pending'
+    `;
+
+    db.query(checkSaleQuery, [saleId], (err, saleResults) => {
+      if (err) {
+        console.error("Error executing checkSaleQuery:", err);
+        return db.rollback(() =>
+          res.status(500).json({ error: "Error checking sale." })
+        );
+      }
+
+      if (saleResults.length === 0) {
+        console.error("Sale not found or already supplied.");
+        return db.rollback(() =>
+          res.status(400).json({ error: "Sale not found or already supplied." })
+        );
+      }
+
+      const sale = saleResults[0];
+      console.log(`Sale found: ${JSON.stringify(sale)}`);
+
+      const updateSaleQuery =
+        "UPDATE sales SET status = 'supplied' WHERE sales_id = ?";
+      db.query(updateSaleQuery, [saleId], (err) => {
+        if (err) {
+          console.error("Error executing updateSaleQuery:", err);
+          return db.rollback(() =>
+            res.status(500).json({ error: "Error updating sale status." })
+          );
+        }
+
+        // Update the opening_qty only, don't touch the closing_stock
+        const updateStockQuery = `
+          UPDATE stock
+          SET opening_qty = opening_qty - ?
+          WHERE id = ?
+        `;
+
+        db.query(
+          updateStockQuery,
+          [sale.quantity_purchased, sale.item_id],
+          (err) => {
+            if (err) {
+              console.error("Error executing updateStockQuery:", err);
+              return db.rollback(() =>
+                res.status(500).json({ error: "Error updating stock." })
+              );
+            }
+
+            console.log(
+              `Stock updated. ${sale.quantity_purchased} units subtracted from item ID ${sale.item_id}.`
+            );
+
+            db.commit((err) => {
+              if (err) {
+                console.error("Transaction commit error:", err);
+                return db.rollback(() =>
+                  res
+                    .status(500)
+                    .json({ error: "Error committing transaction." })
+                );
+              }
+              res.send("Sale status updated to supplied and stock adjusted.");
+            });
+          }
+        );
+      });
+    });
+  });
+};
 
 export const Return = (req, res) => {
   const { customer, items } = req.body;
@@ -2448,42 +2526,56 @@ export const Return = (req, res) => {
     const checkCustomerQuery = `
       SELECT customer_id FROM customers WHERE customer_name = ? AND number = ?
     `;
-    db.query(checkCustomerQuery, [customer_name, number], (err, customerResults) => {
-      if (err) {
-        console.error("Error executing checkCustomerQuery:", err);
-        return db.rollback(() => res.status(500).json({ error: err.message }));
-      }
+    db.query(
+      checkCustomerQuery,
+      [customer_name, number],
+      (err, customerResults) => {
+        if (err) {
+          console.error("Error executing checkCustomerQuery:", err);
+          return db.rollback(() =>
+            res.status(500).json({ error: err.message })
+          );
+        }
 
-      let customerId;
-      if (customerResults.length === 0) {
-        // Customer does not exist, insert them
-        const insertCustomerQuery = `
+        let customerId;
+        if (customerResults.length === 0) {
+          // Customer does not exist, insert them
+          const insertCustomerQuery = `
           INSERT INTO customers (customer_id, customer_name, number, created_at) 
           VALUES (UUID(), ?, ?, NOW())
         `;
-        db.query(insertCustomerQuery, [customer_name, number], (err) => {
-          if (err) {
-            console.error("Error inserting customer:", err);
-            return db.rollback(() => res.status(500).json({ error: err.message }));
-          }
-
-          const fetchCustomerIdQuery = `SELECT customer_id FROM customers WHERE number = ?`;
-          db.query(fetchCustomerIdQuery, [number], (err, newCustomerResult) => {
+          db.query(insertCustomerQuery, [customer_name, number], (err) => {
             if (err) {
-              console.error("Error fetching customer ID:", err);
-              return db.rollback(() => res.status(500).json({ error: err.message }));
+              console.error("Error inserting customer:", err);
+              return db.rollback(() =>
+                res.status(500).json({ error: err.message })
+              );
             }
 
-            customerId = newCustomerResult[0].customer_id;
-            processItems(customerId);
+            const fetchCustomerIdQuery = `SELECT customer_id FROM customers WHERE number = ?`;
+            db.query(
+              fetchCustomerIdQuery,
+              [number],
+              (err, newCustomerResult) => {
+                if (err) {
+                  console.error("Error fetching customer ID:", err);
+                  return db.rollback(() =>
+                    res.status(500).json({ error: err.message })
+                  );
+                }
+
+                customerId = newCustomerResult[0].customer_id;
+                processItems(customerId);
+              }
+            );
           });
-        });
-      } else {
-        // Customer exists, use their ID
-        customerId = customerResults[0].customer_id;
-        processItems(customerId);
+        } else {
+          // Customer exists, use their ID
+          customerId = customerResults[0].customer_id;
+          processItems(customerId);
+        }
       }
-    });
+    );
 
     const processItems = (customerId) => {
       const returnId = uuidv4(); // Generate returnId once for all items
@@ -2520,11 +2612,15 @@ export const Return = (req, res) => {
         db.query(checkStockQuery, [itemName], (err, stockResults) => {
           if (err) {
             console.error("Error executing checkStockQuery:", err);
-            return db.rollback(() => res.status(500).json({ error: err.message }));
+            return db.rollback(() =>
+              res.status(500).json({ error: err.message })
+            );
           }
 
           if (stockResults.length === 0) {
-            console.error(`Item '${itemName}' not found in stock or does not match 'day_to_day' record type.`);
+            console.error(
+              `Item '${itemName}' not found in stock or does not match 'day_to_day' record type.`
+            );
             return db.rollback(() =>
               res.status(400).json({
                 error: `Item '${itemName}' not found in stock or does not match 'day_to_day' record type.`,
@@ -2539,27 +2635,35 @@ export const Return = (req, res) => {
             INSERT INTO returns (return_id, date, customer_id, customer_name, item_id, item, quantity)
             VALUES (?, ?, ?, ?, ?, ?, ?)
           `;
-          db.query(insertReturnQuery, [returnId, date, customerId, customer_name, id, itemName, qty], (err) => {
-            if (err) {
-              console.error("Error executing insertReturnQuery:", err);
-              return db.rollback(() => res.status(500).json({ error: err.message }));
-            }
+          db.query(
+            insertReturnQuery,
+            [returnId, date, customerId, customer_name, id, itemName, qty],
+            (err) => {
+              if (err) {
+                console.error("Error executing insertReturnQuery:", err);
+                return db.rollback(() =>
+                  res.status(500).json({ error: err.message })
+                );
+              }
 
-            const updateStockQuery = `
+              const updateStockQuery = `
               UPDATE stock
               SET closing_stock = closing_stock + ?, opening_qty = opening_qty + ?
               WHERE id = ?
             `;
-            db.query(updateStockQuery, [qty, qty, id], (err) => {
-              if (err) {
-                console.error("Error executing updateStockQuery:", err);
-                return db.rollback(() => res.status(500).json({ error: err.message }));
-              }
+              db.query(updateStockQuery, [qty, qty, id], (err) => {
+                if (err) {
+                  console.error("Error executing updateStockQuery:", err);
+                  return db.rollback(() =>
+                    res.status(500).json({ error: err.message })
+                  );
+                }
 
-              itemProcessed++;
-              processNextItem();
-            });
-          });
+                itemProcessed++;
+                processNextItem();
+              });
+            }
+          );
         });
       };
 
@@ -2567,7 +2671,6 @@ export const Return = (req, res) => {
     };
   });
 };
-
 
 export const Exchange = (req, res) => {
   const { customer, items } = req.body; // Destructure 'customer' and 'items' from req.body
@@ -2743,7 +2846,6 @@ export const getCustomerByName = (req, res) => {
     res.json(results[0]);
   });
 };
-
 
 export const getSaleById = (req, res) => {
   const { saleId } = req.params; // Get the saleId from request parameters
