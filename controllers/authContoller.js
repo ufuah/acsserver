@@ -578,7 +578,7 @@ export const login = (req, res) => {
 
     // Set access token in cookie
     res.cookie("accessToken", accessToken, {
-      httpOnly: true, // Secure access from JavaScript
+      httpOnly: false, // Secure access from JavaScript
       secure: process.env.NODE_ENV === "production", // Use HTTPS in production
       sameSite: "none", // Prevent CSRF
       path: "/", 
@@ -587,7 +587,7 @@ export const login = (req, res) => {
 
     // Set refresh token in cookie
     res.cookie("refreshToken", refreshToken, {
-      httpOnly: true, // Secure access from JavaScript
+      httpOnly: false, // Secure access from JavaScript
       secure: process.env.NODE_ENV === "production", // Use HTTPS in production
       sameSite: "none", 
       path: "/",
