@@ -585,18 +585,18 @@ export const login = (req, res) => {
 
       // Set access token in httpOnly cookie
       res.cookie("accessToken", accessToken, {
-        httpOnly: true, // Set this to true for security
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "Strict",
+        httpOnly: true,
+        secure: true, // Only set to true if using HTTPS
+        sameSite: "None", // Required for cross-origin cookies
         path: "/",
         maxAge: 15 * 60 * 1000,
       });
 
       // Set refresh token in httpOnly cookie
       res.cookie("refreshToken", refreshToken, {
-        httpOnly: true, // Set this to true for security
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "Strict",
+        httpOnly: true,
+        secure: true, // Only set to true if using HTTPS
+        sameSite: "None", // Required for cross-origin cookies
         path: "/",
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
