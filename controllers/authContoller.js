@@ -411,94 +411,196 @@ import db from "../db/db.js"; // Adjust path as necessary
 //   );
 // };
 
+// export const login = (req, res) => {
+//   const { username, password } = req.body;
+
+//   // Log incoming request
+//   console.log(`Login attempt for user: ${username}`);
+
+//   // Validate input
+//   if (!username || !password) {
+//     console.warn("Login failed: Username and password are required");
+//     return res
+//       .status(400)
+//       .json({ message: "Username and password are required" });
+//   }
+
+//   // Query the database for the user
+//   db.query(
+//     "SELECT * FROM users WHERE username = ?",
+//     [username],
+//     (err, results) => {
+//       if (err) {
+//         console.error("Database error:", err.message);
+//         return res
+//           .status(500)
+//           .json({ message: "Database error", error: err.message });
+//       }
+
+//       // Check if user exists
+//       if (results.length === 0) {
+//         console.warn(`Login failed: Invalid credentials for user: ${username}`);
+//         return res.status(401).json({ message: "Invalid credentials" });
+//       }
+
+//       const user = results[0];
+
+//       // Check if password matches (consider using bcrypt for password hashing)
+//       if (password !== user.password) {
+//         console.warn(`Login failed: Invalid password for user: ${username}`);
+//         return res.status(401).json({ message: "Invalid credentials" });
+//       }
+
+//       // Generate short-lived access token
+//       const accessToken = jwt.sign(
+//         { id: user.id, username: user.username, role: user.role },
+//         process.env.JWT_SECRET || "accessSecret",
+//         { expiresIn: "15m" }
+//       );
+
+//       // Generate long-lived refresh token
+//       const refreshToken = jwt.sign(
+//         { id: user.id },
+//         process.env.JWT_REFRESH_SECRET || "refreshSecret",
+//         { expiresIn: "7d" }
+//       );
+
+//       // Set access token in httpOnly cookie
+//       // res.cookie('accessToken', accessToken, {
+//       //   httpOnly: false,
+//       //   secure: process.env.NODE_ENV === 'production', // Use secure in production
+//       //   maxAge: 3600000 // 1 hour
+//       // });
+
+//       res.cookie("accessToken", accessToken, {
+//         httpOnly: false, // Access via JavaScript (set to true for more security, but green color means false)
+//         secure: process.env.NODE_ENV === "production", // Send over HTTPS in production
+//         sameSite: "Strict", // Limits CSRF attacks
+//         path: "/", // Available across the entire app
+//         maxAge: 15 * 60 * 1000, // 15 minutes lifetime
+//       });
+      
+//       // Set refresh token in httpOnly cookie
+//       res.cookie("refreshToken", refreshToken, {
+//         httpOnly: false, // Set to true for production
+//         secure: process.env.NODE_ENV === "production",
+//         sameSite: "Strict", // Adjust based on your needs
+//         path: "/",
+//         maxAge: 7 * 24 *  60 * 60 * 1000, // 7 days
+//       });
+
+//       console.log(`Login successful for user: ${username}`);
+//       console.log("Set-Cookie Header:", res.getHeaders()["set-cookie"]); // Log the cookie headers
+
+//       res.json({
+//         message: "Login successful",
+//         user: { id: user.id, username: user.username, role: user.role },
+//         accessToken,
+//       });
+//     }
+//   );
+// };
+
+// export const refreshToken = (req, res) => {
+//   const refreshToken = req.cookies.refreshToken;
+
+//   if (!refreshToken) {
+//     return res.status(401).json({ message: "Refresh token not found" });
+//   }
+
+//   jwt.verify(refreshToken, 'refreshToken', (err, decoded) => {
+//     if (err) {
+//       return res.status(403).json({ message: "Invalid refresh token" });
+//     }
+
+//     // Generate new access token
+//     const newAccessToken = jwt.sign(
+//       { id: decoded.id, username: decoded.username, role: decoded.role },
+//       process.env.JWT_SECRET || "accessSecret",
+//       { expiresIn: "15m" }
+//     );
+
+//     res.cookie("accessToken", newAccessToken, {
+//       httpOnly: false,
+//       secure: process.env.NODE_ENV === "production",
+//       sameSite: "none",
+//       path: "/",
+//       maxAge: 15 * 60 * 1000, // 15 minutes
+//     });
+
+//     res.json({ message: "Access token refreshed" });
+//   });
+// };
+
 export const login = (req, res) => {
   const { username, password } = req.body;
 
-  // Log incoming request
   console.log(`Login attempt for user: ${username}`);
 
-  // Validate input
   if (!username || !password) {
     console.warn("Login failed: Username and password are required");
-    return res
-      .status(400)
-      .json({ message: "Username and password are required" });
+    return res.status(400).json({ message: "Username and password are required" });
   }
 
   // Query the database for the user
-  db.query(
-    "SELECT * FROM users WHERE username = ?",
-    [username],
-    (err, results) => {
-      if (err) {
-        console.error("Database error:", err.message);
-        return res
-          .status(500)
-          .json({ message: "Database error", error: err.message });
-      }
-
-      // Check if user exists
-      if (results.length === 0) {
-        console.warn(`Login failed: Invalid credentials for user: ${username}`);
-        return res.status(401).json({ message: "Invalid credentials" });
-      }
-
-      const user = results[0];
-
-      // Check if password matches (consider using bcrypt for password hashing)
-      if (password !== user.password) {
-        console.warn(`Login failed: Invalid password for user: ${username}`);
-        return res.status(401).json({ message: "Invalid credentials" });
-      }
-
-      // Generate short-lived access token
-      const accessToken = jwt.sign(
-        { id: user.id, username: user.username, role: user.role },
-        process.env.JWT_SECRET || "accessSecret",
-        { expiresIn: "15m" }
-      );
-
-      // Generate long-lived refresh token
-      const refreshToken = jwt.sign(
-        { id: user.id },
-        process.env.JWT_REFRESH_SECRET || "refreshSecret",
-        { expiresIn: "7d" }
-      );
-
-      // Set access token in httpOnly cookie
-      // res.cookie('accessToken', accessToken, {
-      //   httpOnly: false,
-      //   secure: process.env.NODE_ENV === 'production', // Use secure in production
-      //   maxAge: 3600000 // 1 hour
-      // });
-
-      res.cookie("accessToken", accessToken, {
-        httpOnly: false, // Access via JavaScript (set to true for more security, but green color means false)
-        secure: process.env.NODE_ENV === "production", // Send over HTTPS in production
-        sameSite: "Strict", // Limits CSRF attacks
-        path: "/", // Available across the entire app
-        maxAge: 15 * 60 * 1000, // 15 minutes lifetime
-      });
-      
-      // Set refresh token in httpOnly cookie
-      res.cookie("refreshToken", refreshToken, {
-        httpOnly: false, // Set to true for production
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "Strict", // Adjust based on your needs
-        path: "/",
-        maxAge: 7 * 24 *  60 * 60 * 1000, // 7 days
-      });
-
-      console.log(`Login successful for user: ${username}`);
-      console.log("Set-Cookie Header:", res.getHeaders()["set-cookie"]); // Log the cookie headers
-
-      res.json({
-        message: "Login successful",
-        user: { id: user.id, username: user.username, role: user.role },
-        accessToken,
-      });
+  db.query("SELECT * FROM users WHERE username = ?", [username], (err, results) => {
+    if (err) {
+      console.error("Database error:", err.message);
+      return res.status(500).json({ message: "Database error", error: err.message });
     }
-  );
+
+    if (results.length === 0) {
+      console.warn(`Login failed: Invalid credentials for user: ${username}`);
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    const user = results[0];
+
+    // Check if password matches
+    if (password !== user.password) {
+      console.warn(`Login failed: Invalid password for user: ${username}`);
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    // Generate short-lived access token
+    const accessToken = jwt.sign(
+      { id: user.id, username: user.username, role: user.role },
+      process.env.JWT_SECRET || "accessSecret",
+      { expiresIn: "15m" }
+    );
+
+    // Generate long-lived refresh token
+    const refreshToken = jwt.sign(
+      { id: user.id, username: user.username, role: user.role },
+      process.env.JWT_REFRESH_SECRET || "refreshSecret",
+      { expiresIn: "7d" }
+    );
+
+    // Set access token in cookie
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true, // Secure access from JavaScript
+      secure: process.env.NODE_ENV === "production", // Use HTTPS in production
+      sameSite: "Strict", // Prevent CSRF
+      path: "/", 
+      maxAge: 15 * 60 * 1000, // 15 minutes
+    });
+
+    // Set refresh token in cookie
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true, // Secure access from JavaScript
+      secure: process.env.NODE_ENV === "production", // Use HTTPS in production
+      sameSite: "Strict", 
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    console.log(`Login successful for user: ${username}`);
+
+    res.json({
+      message: "Login successful",
+      user: { id: user.id, username: user.username, role: user.role },
+    });
+  });
 };
 
 export const refreshToken = (req, res) => {
@@ -508,7 +610,7 @@ export const refreshToken = (req, res) => {
     return res.status(401).json({ message: "Refresh token not found" });
   }
 
-  jwt.verify(refreshToken, 'refreshToken', (err, decoded) => {
+  jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET || "refreshSecret", (err, decoded) => {
     if (err) {
       return res.status(403).json({ message: "Invalid refresh token" });
     }
@@ -521,9 +623,9 @@ export const refreshToken = (req, res) => {
     );
 
     res.cookie("accessToken", newAccessToken, {
-      httpOnly: false,
+      httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "none",
+      sameSite: "Strict",
       path: "/",
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
@@ -531,6 +633,7 @@ export const refreshToken = (req, res) => {
     res.json({ message: "Access token refreshed" });
   });
 };
+
 
 // export const refreshToken = (req, res) => {
 //   const refreshToken = req.cookies.refreshToken;
