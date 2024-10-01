@@ -580,7 +580,7 @@ export const login = (req, res) => {
     res.cookie("accessToken", accessToken, {
       httpOnly: true, // Secure access from JavaScript
       secure: process.env.NODE_ENV === "production", // Use HTTPS in production
-      sameSite: "Strict", // Prevent CSRF
+      sameSite: "none", // Prevent CSRF
       path: "/", 
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
@@ -589,7 +589,7 @@ export const login = (req, res) => {
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true, // Secure access from JavaScript
       secure: process.env.NODE_ENV === "production", // Use HTTPS in production
-      sameSite: "Strict", 
+      sameSite: "none", 
       path: "/",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
