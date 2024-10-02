@@ -13,7 +13,7 @@ import { authMiddleware } from '../middleware/authMiddleware.js';
 const router = express.Router();
 
 // Route to get all stock items
-router.get('/',authMiddleware, getAllStocks);
+router.get('/', getAllStocks);
 
 // Route to get stock items by description
 router.get('/description', getStockByDescription);
