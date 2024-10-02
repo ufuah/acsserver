@@ -880,7 +880,7 @@ export const login = (req, res) => {
         res.cookie("accessToken", accessToken, {
           httpOnly: true,
           secure: true,
-          sameSite: "Lax",
+          sameSite: "Strict",
           path: "/",
           maxAge: 15 * 60 * 1000,
         });
@@ -889,7 +889,7 @@ export const login = (req, res) => {
         res.cookie("refreshToken", refreshToken, {
           httpOnly: true,
           secure: true,
-          sameSite: "Lax",
+          sameSite: "Strict",
           path: "/",
           maxAge: 7 * 24 * 60 * 60 * 1000,
         });
