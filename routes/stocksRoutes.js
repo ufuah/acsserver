@@ -19,9 +19,9 @@ router.get('/', getAllStocks);
 router.get('/description', getStockByDescription);
 
 // Route to save new stock record
-router.post('/add',authMiddleware, addStock);
+router.post('/add', addStock);
 
 // Route to update existing stock record by description
-router.put('/:description',authMiddleware, updateStock); // Use PUT for updating
+router.put('/:description', updateStock); // Use PUT for updating
 
 export default router;
