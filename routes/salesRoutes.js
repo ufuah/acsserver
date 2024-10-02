@@ -9,6 +9,7 @@ import {
   getCustomerByName,
   getSaleById
 } from "../controllers/salesController.js";
+import { authMiddleware } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -16,14 +17,14 @@ const router = express.Router();
 router.get("/", getAllSales);
 
 // Add a new sale
-router.post("/add", addSale);
+router.post("/add",authMiddleware, addSale);
 
 // update sale  status
 router.put("/:saleId/status", updateSaleStatus);
 
-router.post("/return", Return);
+router.post("/return",authMiddleware, Return);
  
-router.post('/exchange', Exchange);
+router.post('/exchange',authMiddleware, Exchange);
 
 // Get all customers
 router.get("/customers", getAllCustomers);
