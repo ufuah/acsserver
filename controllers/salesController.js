@@ -3343,14 +3343,127 @@ export const Return = (req, res) => {
 
 
 
+// export const Exchange = (req, res) => {
+//   const { customer, items } = req.body; // Destructure 'customer' and 'items' from req.body
+//   const { customer_name, number, date } = customer; // Destructure customer fields
+
+//   // Validate the presence of required fields
+//   if (!customer_name || !number || !date || !items || items.length === 0) {
+//     return res.status(400).json({ error: "Missing required fields" });
+//   }
+
+//   db.beginTransaction((err) => {
+//     if (err) {
+//       console.error("Transaction start error:", err);
+//       return res.status(500).json({ error: err.message });
+//     }
+
+//     const checkCustomerQuery = `
+//       SELECT customer_id FROM customers WHERE customer_name = ? AND number = ?
+//     `;
+//     db.query(
+//       checkCustomerQuery,
+//       [customer_name, number],
+//       (err, customerResults) => {
+//         if (err) {
+//           console.error("Error executing checkCustomerQuery:", err);
+//           return db.rollback(() =>
+//             res.status(500).json({ error: err.message })
+//           );
+//         }
+
+//         let customerId;
+//         if (customerResults.length === 0) {
+//           // Customer does not exist, insert them
+//           const insertCustomerQuery = `
+//           INSERT INTO customers (customer_id, customer_name, number, created_at) 
+//           VALUES (UUID(), ?, ?, NOW())
+//         `;
+//           db.query(
+//             insertCustomerQuery,
+//             [customer_name, number],
+//             (err, result) => {
+//               if (err) {
+//                 console.error("Error inserting customer:", err);
+//                 return db.rollback(() =>
+//                   res.status(500).json({ error: err.message })
+//                 );
+//               }
+
+//               // Fetch the newly inserted customer's ID
+//               const fetchCustomerIdQuery = `SELECT customer_id FROM customers WHERE number = ?`;
+//               db.query(
+//                 fetchCustomerIdQuery,
+//                 [number],
+//                 (err, newCustomerResult) => {
+//                   if (err) {
+//                     console.error("Error fetching customer ID:", err);
+//                     return db.rollback(() =>
+//                       res.status(500).json({ error: err.message })
+//                     );
+//                   }
+
+//                   customerId = newCustomerResult[0].customer_id;
+//                   processItems(customerId);
+//                 }
+//               );
+//             }
+//           );
+//         } else {
+//           // Customer exists, use their ID
+//           customerId = customerResults[0].customer_id;
+//           processItems(customerId);
+//         }
+//       }
+//     );
+
+//     const processItems = (customerId) => {
+//       const exchangeId = uuidv4(); // Generate exchangeId once for all items
+
+//       let itemProcessed = 0;
+
+//       const processNextItem = () => {
+//         if (itemProcessed >= items.length) {
+//           db.commit((err) => {
+//             if (err) {
+//               console.error("Transaction commit error:", err);
+//               return db.rollback(() =>
+//                 res.status(500).json({ error: "Error committing transaction." })
+//               );
+//             }
+//             // Return success message along with exchangeId
+//             res.json({ message: "Exchange added successfully.", exchangeId });
+//           });
+//           return;
+//         }
+
+//         const item = items[itemProcessed];
+//         const { item: itemName, qty } = item;
+
+//         // Rest of the exchange logic here...
+
+//         itemProcessed++;
+//         processNextItem();
+//       };
+
+//       processNextItem();
+//     };
+//   });
+// };
+
+
+
 export const Exchange = (req, res) => {
   const { customer, items } = req.body; // Destructure 'customer' and 'items' from req.body
   const { customer_name, number, date } = customer; // Destructure customer fields
 
   // Validate the presence of required fields
   if (!customer_name || !number || !date || !items || items.length === 0) {
+    console.log("Validation error: Missing required fields");
     return res.status(400).json({ error: "Missing required fields" });
   }
+
+  console.log("Starting transaction for customer:", customer_name, "with number:", number);
 
   db.beginTransaction((err) => {
     if (err) {
@@ -3375,6 +3488,7 @@ export const Exchange = (req, res) => {
         let customerId;
         if (customerResults.length === 0) {
           // Customer does not exist, insert them
+          console.log("Customer not found, inserting:", customer_name);
           const insertCustomerQuery = `
           INSERT INTO customers (customer_id, customer_name, number, created_at) 
           VALUES (UUID(), ?, ?, NOW())
@@ -3404,6 +3518,7 @@ export const Exchange = (req, res) => {
                   }
 
                   customerId = newCustomerResult[0].customer_id;
+                  console.log("Inserted customer ID:", customerId);
                   processItems(customerId);
                 }
               );
@@ -3412,6 +3527,7 @@ export const Exchange = (req, res) => {
         } else {
           // Customer exists, use their ID
           customerId = customerResults[0].customer_id;
+          console.log("Existing customer ID found:", customerId);
           processItems(customerId);
         }
       }
@@ -3419,11 +3535,13 @@ export const Exchange = (req, res) => {
 
     const processItems = (customerId) => {
       const exchangeId = uuidv4(); // Generate exchangeId once for all items
+      console.log("Processing items for exchange ID:", exchangeId);
 
       let itemProcessed = 0;
 
       const processNextItem = () => {
         if (itemProcessed >= items.length) {
+          console.log("All items processed, committing transaction.");
           db.commit((err) => {
             if (err) {
               console.error("Transaction commit error:", err);
@@ -3432,6 +3550,7 @@ export const Exchange = (req, res) => {
               );
             }
             // Return success message along with exchangeId
+            console.log("Transaction committed successfully.");
             res.json({ message: "Exchange added successfully.", exchangeId });
           });
           return;
@@ -3440,8 +3559,10 @@ export const Exchange = (req, res) => {
         const item = items[itemProcessed];
         const { item: itemName, qty } = item;
 
-        // Rest of the exchange logic here...
-
+        console.log(`Processing item: ${itemName}, Quantity: ${qty}`);
+        
+        // Implement the rest of the exchange logic here...
+        
         itemProcessed++;
         processNextItem();
       };
@@ -3450,6 +3571,7 @@ export const Exchange = (req, res) => {
     };
   });
 };
+
 
 export const getAllCustomers = (req, res) => {
   const query = "SELECT * FROM customers";
