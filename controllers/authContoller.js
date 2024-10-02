@@ -909,23 +909,32 @@ export const login = (req, res) => {
 export const signUp = (req, res) => {
   const { username, password, role } = req.body;
 
+  console.log(`Signup attempt for user: ${username}`);
+
   // Check if the user already exists
   db.query("SELECT * FROM users WHERE username = ?", [username], (err, results) => {
     if (err) {
+      console.error(`Database error during user check: ${err.message}`);
       return res
         .status(500)
         .json({ message: "Database error", error: err.message });
     }
 
     if (results.length > 0) {
+      console.warn(`Signup failed: User ${username} already exists`);
       return res.status(400).json({ message: "User already exists" });
     }
+
+    console.log(`No existing user found. Proceeding with signup for: ${username}`);
 
     // Hash the password before storing it
     bcrypt.hash(password, 10, (err, hashedPassword) => {
       if (err) {
+        console.error(`Error hashing password for user ${username}: ${err.message}`);
         return res.status(500).json({ message: "Error hashing password" });
       }
+
+      console.log(`Password successfully hashed for user: ${username}`);
 
       // Add new user with the hashed password
       db.query(
@@ -933,17 +942,20 @@ export const signUp = (req, res) => {
         [username, hashedPassword, role],
         (err, result) => {
           if (err) {
+            console.error(`Database error during user insertion: ${err.message}`);
             return res
               .status(500)
               .json({ message: "Database error", error: err.message });
           }
 
+          console.log(`User ${username} successfully registered with role: ${role}`);
           res.status(201).json({ message: "User registered successfully" });
         }
       );
     });
   });
 };
+
 
 export const refreshToken = (req, res) => {
   const { refreshToken } = req.cookies;
