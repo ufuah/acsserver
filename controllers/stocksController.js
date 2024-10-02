@@ -1271,8 +1271,7 @@ export const addStock = (req, res) => {
     exchange_qty: 0,
     return_qty: 0,
     standard_price,
-    // Remove closing_stock from here
-    closing_value: purchase_qty * standard_price, // Closing value calculated
+    // Remove closing_stock and closing_value from here
     record_type: 'day_to_day',
     category, // Category passed to the day-to-day record
   };
@@ -1293,8 +1292,8 @@ export const addStock = (req, res) => {
 
   // Insert both records into the database
   const queryInsert = `
-    INSERT INTO stock (description, opening_qty, purchase_qty, exchange_qty, return_qty, standard_price, closing_value, category, record_type)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO stock (description, opening_qty, purchase_qty, exchange_qty, return_qty, standard_price, category, record_type)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
   // Insert Day-to-Day Record
@@ -1305,7 +1304,6 @@ export const addStock = (req, res) => {
     dayToDayRecord.exchange_qty,
     dayToDayRecord.return_qty,
     dayToDayRecord.standard_price,
-    // dayToDayRecord.closing_value, // Only include closing_value
     dayToDayRecord.category, // Pass category
     dayToDayRecord.record_type,
   ], (err) => {
@@ -1324,7 +1322,6 @@ export const addStock = (req, res) => {
       recordKeeping.exchange_qty,
       recordKeeping.return_qty,
       recordKeeping.standard_price,
-      recordKeeping.closing_value, // Only include closing_value
       recordKeeping.category, // Pass category
       recordKeeping.record_type,
     ], (err) => {
@@ -1338,6 +1335,7 @@ export const addStock = (req, res) => {
     });
   });
 };
+
 
 
 
