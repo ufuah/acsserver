@@ -3453,6 +3453,129 @@ export const Return = (req, res) => {
 
 
 
+// export const Exchange = (req, res) => {
+//   const { customer, items } = req.body; // Destructure 'customer' and 'items' from req.body
+//   const { customer_name, number, date } = customer; // Destructure customer fields
+
+//   // Validate the presence of required fields
+//   if (!customer_name || !number || !date || !items || items.length === 0) {
+//     console.log("Validation error: Missing required fields");
+//     return res.status(400).json({ error: "Missing required fields" });
+//   }
+
+//   console.log("Starting transaction for customer:", customer_name, "with number:", number);
+
+//   db.beginTransaction((err) => {
+//     if (err) {
+//       console.error("Transaction start error:", err);
+//       return res.status(500).json({ error: err.message });
+//     }
+
+//     const checkCustomerQuery = `
+//       SELECT customer_id FROM customers WHERE customer_name = ? AND number = ?
+//     `;
+//     db.query(
+//       checkCustomerQuery,
+//       [customer_name, number],
+//       (err, customerResults) => {
+//         if (err) {
+//           console.error("Error executing checkCustomerQuery:", err);
+//           return db.rollback(() =>
+//             res.status(500).json({ error: err.message })
+//           );
+//         }
+
+//         let customerId;
+//         if (customerResults.length === 0) {
+//           // Customer does not exist, insert them
+//           console.log("Customer not found, inserting:", customer_name);
+//           const insertCustomerQuery = `
+//           INSERT INTO customers (customer_id, customer_name, number, created_at) 
+//           VALUES (UUID(), ?, ?, NOW())
+//         `;
+//           db.query(
+//             insertCustomerQuery,
+//             [customer_name, number],
+//             (err, result) => {
+//               if (err) {
+//                 console.error("Error inserting customer:", err);
+//                 return db.rollback(() =>
+//                   res.status(500).json({ error: err.message })
+//                 );
+//               }
+
+//               // Fetch the newly inserted customer's ID
+//               const fetchCustomerIdQuery = `SELECT customer_id FROM customers WHERE number = ?`;
+//               db.query(
+//                 fetchCustomerIdQuery,
+//                 [number],
+//                 (err, newCustomerResult) => {
+//                   if (err) {
+//                     console.error("Error fetching customer ID:", err);
+//                     return db.rollback(() =>
+//                       res.status(500).json({ error: err.message })
+//                     );
+//                   }
+
+//                   customerId = newCustomerResult[0].customer_id;
+//                   console.log("Inserted customer ID:", customerId);
+//                   processItems(customerId);
+//                 }
+//               );
+//             }
+//           );
+//         } else {
+//           // Customer exists, use their ID
+//           customerId = customerResults[0].customer_id;
+//           console.log("Existing customer ID found:", customerId);
+//           processItems(customerId);
+//         }
+//       }
+//     );
+
+//     const processItems = (customerId) => {
+//       const exchangeId = uuidv4(); // Generate exchangeId once for all items
+//       console.log("Processing items for exchange ID:", exchangeId);
+
+//       let itemProcessed = 0;
+
+//       const processNextItem = () => {
+//         if (itemProcessed >= items.length) {
+//           console.log("All items processed, committing transaction.");
+//           db.commit((err) => {
+//             if (err) {
+//               console.error("Transaction commit error:", err);
+//               return db.rollback(() =>
+//                 res.status(500).json({ error: "Error committing transaction." })
+//               );
+//             }
+//             // Return success message along with exchangeId
+//             console.log("Transaction committed successfully.");
+//             res.json({ message: "Exchange added successfully.", exchangeId });
+//           });
+//           return;
+//         }
+
+//         const item = items[itemProcessed];
+//         const { item: itemName, qty } = item;
+
+//         console.log(`Processing item: ${itemName}, Quantity: ${qty}`);
+        
+//         // Implement the rest of the exchange logic here...
+        
+//         itemProcessed++;
+//         processNextItem();
+//       };
+
+//       processNextItem();
+//     };
+//   });
+// };
+
+
+
+import { v4 as uuidv4 } from 'uuid'; // Ensure this is imported at the top
+
 export const Exchange = (req, res) => {
   const { customer, items } = req.body; // Destructure 'customer' and 'items' from req.body
   const { customer_name, number, date } = customer; // Destructure customer fields
@@ -3490,9 +3613,9 @@ export const Exchange = (req, res) => {
           // Customer does not exist, insert them
           console.log("Customer not found, inserting:", customer_name);
           const insertCustomerQuery = `
-          INSERT INTO customers (customer_id, customer_name, number, created_at) 
-          VALUES (UUID(), ?, ?, NOW())
-        `;
+            INSERT INTO customers (customer_id, customer_name, number, created_at) 
+            VALUES (UUID(), ?, ?, NOW())
+          `;
           db.query(
             insertCustomerQuery,
             [customer_name, number],
@@ -3560,11 +3683,47 @@ export const Exchange = (req, res) => {
         const { item: itemName, qty } = item;
 
         console.log(`Processing item: ${itemName}, Quantity: ${qty}`);
-        
-        // Implement the rest of the exchange logic here...
-        
-        itemProcessed++;
-        processNextItem();
+
+        // Logic to update stock levels
+        const updateStockQuery = `
+          UPDATE stock SET closing_stock = closing_stock + ?, closing_value = closing_value + (SELECT standard_price FROM stock WHERE description = ?) * ?
+          WHERE description = ?
+        `;
+
+        db.query(
+          updateStockQuery,
+          [qty, itemName, qty, itemName],
+          (err) => {
+            if (err) {
+              console.error(`Error updating stock for item ${itemName}:`, err);
+              return db.rollback(() =>
+                res.status(500).json({ error: err.message })
+              );
+            }
+
+            // Logic to record the exchange in a separate exchanges table
+            const recordExchangeQuery = `
+              INSERT INTO exchanges (exchange_id, customer_id, item_name, qty, date)
+              VALUES (?, ?, ?, ?, ?)
+            `;
+            db.query(
+              recordExchangeQuery,
+              [exchangeId, customerId, itemName, qty, date],
+              (err) => {
+                if (err) {
+                  console.error(`Error recording exchange for item ${itemName}:`, err);
+                  return db.rollback(() =>
+                    res.status(500).json({ error: err.message })
+                  );
+                }
+
+                console.log(`Item processed: ${itemName}, Quantity: ${qty}`);
+                itemProcessed++;
+                processNextItem(); // Move to the next item
+              }
+            );
+          }
+        );
       };
 
       processNextItem();
