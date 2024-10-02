@@ -1305,7 +1305,7 @@ export const addStock = (req, res) => {
     dayToDayRecord.exchange_qty,
     dayToDayRecord.return_qty,
     dayToDayRecord.standard_price,
-    dayToDayRecord.closing_value, // Only include closing_value
+    // dayToDayRecord.closing_value, // Only include closing_value
     dayToDayRecord.category, // Pass category
     dayToDayRecord.record_type,
   ], (err) => {
