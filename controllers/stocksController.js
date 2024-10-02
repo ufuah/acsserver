@@ -1163,6 +1163,95 @@ const insertStockRecord = (body, res) => {
 //   });
 // };
 
+// export const addStock = (req, res) => {
+//   const { description, purchase_qty, standard_price, category } = req.body;
+
+//   log(`Received request to add stock: ${JSON.stringify(req.body)}`);
+
+//   // Check for required fields
+//   if (!description || purchase_qty === undefined || standard_price === undefined || !category) {
+//     log("Missing required fields in request");
+//     return res.status(400).json({ error: "Missing required fields" });
+//   }
+
+//   // Day-to-Day Record
+//   const dayToDayRecord = {
+//     description,
+//     opening_qty: purchase_qty, // Day-to-day opening and closing are based on the purchase quantity
+//     purchase_qty: 0, // Day-to-day purchase_qty is set to 0
+//     exchange_qty: 0,
+//     return_qty: 0,
+//     standard_price,
+//     closing_stock: purchase_qty, // Closing stock equals purchase_qty for day-to-day
+//     closing_value: purchase_qty * standard_price, // Closing value calculated
+//     record_type: 'day_to_day',
+//     category, // Category passed to the day-to-day record
+//   };
+
+//   // Record-Keeping Record
+//   const recordKeeping = {
+//     description,
+//     opening_qty: 0, // Record-keeping doesn't track opening stock
+//     purchase_qty, // Actual purchase quantity is recorded here
+//     exchange_qty: 0,
+//     return_qty: 0,
+//     standard_price,
+//     closing_stock: 0, // Record-keeping doesn't track closing stock
+//     closing_value: 0, // Record-keeping doesn't track closing value
+//     record_type: 'record_keeping',
+//     category, // Category passed to the record-keeping record
+//   };
+
+//   // Insert both records into the database
+//   const queryInsert = `
+//     INSERT INTO stock (description, opening_qty, purchase_qty, exchange_qty, return_qty, standard_price, closing_stock, closing_value, category, record_type)
+//     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+//   `;
+
+//   // Insert Day-to-Day Record
+//   db.query(queryInsert, [
+//     dayToDayRecord.description,
+//     dayToDayRecord.opening_qty,
+//     dayToDayRecord.purchase_qty,
+//     dayToDayRecord.exchange_qty,
+//     dayToDayRecord.return_qty,
+//     dayToDayRecord.standard_price,
+//     dayToDayRecord.closing_stock,
+//     dayToDayRecord.closing_value,
+//     dayToDayRecord.category, // Pass category
+//     dayToDayRecord.record_type,
+//   ], (err) => {
+//     if (err) {
+//       log(`Error inserting day-to-day record: ${err.message}`);
+//       return res.status(500).json({ error: "Database error: " + err.message });
+//     }
+
+//     log(`Day-to-day stock record added successfully for ${description}`);
+
+//     // Insert Record-Keeping Record
+//     db.query(queryInsert, [
+//       recordKeeping.description,
+//       recordKeeping.opening_qty,
+//       recordKeeping.purchase_qty,
+//       recordKeeping.exchange_qty,
+//       recordKeeping.return_qty,
+//       recordKeeping.standard_price,
+//       recordKeeping.closing_stock,
+//       recordKeeping.closing_value,
+//       recordKeeping.category, // Pass category
+//       recordKeeping.record_type,
+//     ], (err) => {
+//       if (err) {
+//         log(`Error inserting record-keeping record: ${err.message}`);
+//         return res.status(500).json({ error: "Database error: " + err.message });
+//       }
+
+//       log(`Record-keeping stock record added successfully for ${description}`);
+//       res.json({ message: "Stock records (day-to-day and record-keeping) added successfully" });
+//     });
+//   });
+// };
+
 export const addStock = (req, res) => {
   const { description, purchase_qty, standard_price, category } = req.body;
 
@@ -1177,12 +1266,12 @@ export const addStock = (req, res) => {
   // Day-to-Day Record
   const dayToDayRecord = {
     description,
-    opening_qty: purchase_qty, // Day-to-day opening and closing are based on the purchase quantity
+    opening_qty: purchase_qty, // Day-to-day opening based on the purchase quantity
     purchase_qty: 0, // Day-to-day purchase_qty is set to 0
     exchange_qty: 0,
     return_qty: 0,
     standard_price,
-    closing_stock: purchase_qty, // Closing stock equals purchase_qty for day-to-day
+    // Remove closing_stock from this object
     closing_value: purchase_qty * standard_price, // Closing value calculated
     record_type: 'day_to_day',
     category, // Category passed to the day-to-day record
@@ -1196,7 +1285,7 @@ export const addStock = (req, res) => {
     exchange_qty: 0,
     return_qty: 0,
     standard_price,
-    closing_stock: 0, // Record-keeping doesn't track closing stock
+    // Remove closing_stock from this object
     closing_value: 0, // Record-keeping doesn't track closing value
     record_type: 'record_keeping',
     category, // Category passed to the record-keeping record
@@ -1204,8 +1293,8 @@ export const addStock = (req, res) => {
 
   // Insert both records into the database
   const queryInsert = `
-    INSERT INTO stock (description, opening_qty, purchase_qty, exchange_qty, return_qty, standard_price, closing_stock, closing_value, category, record_type)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO stock (description, opening_qty, purchase_qty, exchange_qty, return_qty, standard_price, closing_value, category, record_type)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
   // Insert Day-to-Day Record
@@ -1216,8 +1305,7 @@ export const addStock = (req, res) => {
     dayToDayRecord.exchange_qty,
     dayToDayRecord.return_qty,
     dayToDayRecord.standard_price,
-    dayToDayRecord.closing_stock,
-    dayToDayRecord.closing_value,
+    dayToDayRecord.closing_value, // Closing value calculated
     dayToDayRecord.category, // Pass category
     dayToDayRecord.record_type,
   ], (err) => {
@@ -1236,8 +1324,7 @@ export const addStock = (req, res) => {
       recordKeeping.exchange_qty,
       recordKeeping.return_qty,
       recordKeeping.standard_price,
-      recordKeeping.closing_stock,
-      recordKeeping.closing_value,
+      recordKeeping.closing_value, // Closing value set to 0
       recordKeeping.category, // Pass category
       recordKeeping.record_type,
     ], (err) => {
