@@ -5,9 +5,12 @@ import {
   logout,
   toggleLock,
   checkLockStatus,
-  refreshToken
+  refreshToken,
 } from "../controllers/authContoller.js";
-import { authMiddleware, lockMiddleware } from "../middleware/authMiddleware.js";
+import {
+  authMiddleware,
+  lockMiddleware,
+} from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -21,11 +24,11 @@ router.post("/signup", signUp);
 router.post("/logout", logout);
 
 // Route to toggle lock status (only admins should have access)
-router.post("/togglelock", authMiddleware,lockMiddleware, toggleLock);
+router.post("/togglelock", authMiddleware, lockMiddleware, toggleLock);
 
 // Check the current lock status (for authenticated users, protected by both auth and lock checks)
-router.get("/checklock",authMiddleware, lockMiddleware,  checkLockStatus);
+router.get("/checklock", authMiddleware, lockMiddleware, checkLockStatus);
 
 // Refresh Token route
-router.post("/refresh ", refreshToken);
+router.post("/refresh", refreshToken);
 export default router;
