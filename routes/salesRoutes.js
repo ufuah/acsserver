@@ -17,14 +17,14 @@ const router = express.Router();
 router.get("/", getAllSales);
 
 // Add a new sale
-router.post("/add",authMiddleware, addSale);
+router.post("/add", addSale);
 
 // update sale  status
 router.put("/:saleId/status", updateSaleStatus);
 
-router.post("/return",authMiddleware, Return);
+router.post("/return", Return);
  
-router.post('/exchange',authMiddleware, Exchange);
+router.post('/exchange', Exchange);
 
 // Get all customers
 router.get("/customers", getAllCustomers);
