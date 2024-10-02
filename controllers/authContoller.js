@@ -957,6 +957,54 @@ export const signUp = (req, res) => {
 };
 
 
+// export const refreshToken = (req, res) => {
+//   const { refreshToken } = req.cookies;
+
+//   if (!refreshToken) {
+//     return res.status(401).json({ message: "No refresh token provided" });
+//   }
+
+//   jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET || 'refreshSecret', (err, decoded) => {
+//     if (err) {
+//       return res.status(403).json({ message: "Invalid refresh token" });
+//     }
+
+//     // Generate new access token
+//     const newAccessToken = jwt.sign(
+//       { id: decoded.id, username: decoded.username, role: decoded.role },
+//       process.env.JWT_SECRET || 'accessSecret',
+//       { expiresIn: '15m' }
+//     );
+
+//     // Optionally, refresh refreshToken as well
+//     const newRefreshToken = jwt.sign(
+//       { id: decoded.id, username: decoded.username, role: decoded.role },
+//       process.env.JWT_REFRESH_SECRET || 'refreshSecret',
+//       { expiresIn: '7d' }
+//     );
+
+//     // Set cookies
+//     res.cookie("accessToken", newAccessToken, {
+//       httpOnly: true,
+//       secure: process.env.NODE_ENV === "production",
+//       sameSite: "Strict",
+//       path: "/",
+//       maxAge: 15 * 60 * 1000, // 15 minutes
+//     });
+
+//     res.cookie("refreshToken", newRefreshToken, {
+//       httpOnly: true,
+//       secure: process.env.NODE_ENV === "production",
+//       sameSite: "Strict",
+//       path: "/",
+//       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+//     });
+
+//     res.json({ message: "Access token refreshed" });
+//   });
+// };
+
+
 export const refreshToken = (req, res) => {
   const { refreshToken } = req.cookies;
 
@@ -966,6 +1014,10 @@ export const refreshToken = (req, res) => {
 
   jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET || 'refreshSecret', (err, decoded) => {
     if (err) {
+      // If the refresh token is invalid, log the user out
+      console.warn("Invalid refresh token:", err.message);
+      res.clearCookie("accessToken");
+      res.clearCookie("refreshToken");
       return res.status(403).json({ message: "Invalid refresh token" });
     }
 
@@ -976,7 +1028,7 @@ export const refreshToken = (req, res) => {
       { expiresIn: '15m' }
     );
 
-    // Optionally, refresh refreshToken as well
+    // Optionally refresh the refreshToken as well
     const newRefreshToken = jwt.sign(
       { id: decoded.id, username: decoded.username, role: decoded.role },
       process.env.JWT_REFRESH_SECRET || 'refreshSecret',
@@ -1003,8 +1055,7 @@ export const refreshToken = (req, res) => {
     res.json({ message: "Access token refreshed" });
   });
 };
-
-
+ 
 export const logout = (req, res) => {
   res.clearCookie("accessToken");
   res.clearCookie("refreshToken");

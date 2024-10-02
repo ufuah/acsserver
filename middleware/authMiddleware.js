@@ -81,6 +81,27 @@ import db from '../db/db.js'; // Import your database connection
 
 
 // Authentication Middleware
+// export const authMiddleware = (req, res, next) => {
+//   console.log("Cookies:", req.cookies);
+//   const accessToken = req.cookies.accessToken; // Retrieve the access token from cookies
+//   console.log("Access Token:", accessToken); // Debug: Check if the token is retrieved
+
+//   if (!accessToken) {
+//     return res.status(401).json({ message: 'Unauthorized: No token provided.' });
+//   }
+
+//   try {
+//     const user = jwt.verify(accessToken, 'accessSecret'); // Replace 'accessSecret' with your actual JWT secret
+//     console.log("Decoded User:", user); // Debug: Log decoded user info
+//     req.user = user; // Attach user info to the request object
+//     next();
+//   } catch (error) {
+//     console.error('Token verification error:', error);
+//     return res.status(401).json({ message: 'Invalid Token' });
+//   }
+// };
+
+
 export const authMiddleware = (req, res, next) => {
   console.log("Cookies:", req.cookies);
   const accessToken = req.cookies.accessToken; // Retrieve the access token from cookies
@@ -91,15 +112,21 @@ export const authMiddleware = (req, res, next) => {
   }
 
   try {
-    const user = jwt.verify(accessToken, 'accessSecret'); // Replace 'accessSecret' with your actual JWT secret
+    const user = jwt.verify(accessToken, process.env.JWT_SECRET || 'accessSecret'); // Use your actual JWT secret
     console.log("Decoded User:", user); // Debug: Log decoded user info
     req.user = user; // Attach user info to the request object
     next();
   } catch (error) {
     console.error('Token verification error:', error);
+
+    // Clear cookies if the token is invalid or expired
+    res.clearCookie("accessToken");
+    res.clearCookie("refreshToken");
+    
     return res.status(401).json({ message: 'Invalid Token' });
   }
 };
+
 
 // Lock Middleware for Security
 
