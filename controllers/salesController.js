@@ -3574,8 +3574,6 @@ export const Return = (req, res) => {
 
 
 
-import { v4 as uuidv4 } from 'uuid'; // Ensure this is imported at the top
-
 export const Exchange = (req, res) => {
   const { customer, items } = req.body; // Destructure 'customer' and 'items' from req.body
   const { customer_name, number, date } = customer; // Destructure customer fields
