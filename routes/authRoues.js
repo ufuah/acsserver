@@ -18,7 +18,7 @@ router.post("/login", login);
 router.post("/signup", signUp);
 
 // Logout route (protected, only for authenticated users)
-router.post("/logout", authMiddleware, logout);
+router.post("/logout", logout);
 
 // Route to toggle lock status (only admins should have access)
 router.post("/togglelock", authMiddleware,lockMiddleware, toggleLock);
