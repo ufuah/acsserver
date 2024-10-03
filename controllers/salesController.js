@@ -2897,7 +2897,7 @@ const updateStockAfterSale = async (item_id, quantity_purchased) => {
 //         if (customerResults.length === 0) {
 //           // Customer does not exist, insert them
 //           const insertCustomerQuery = `
-//           INSERT INTO customers (customer_id, customer_name, number, created_at) 
+//           INSERT INTO customers (customer_id, customer_name, number, created_at)
 //           VALUES (UUID(), ?, ?, NOW())
 //         `;
 //           db.query(insertCustomerQuery, [customer_name, number], (err) => {
@@ -3028,8 +3028,6 @@ const updateStockAfterSale = async (item_id, quantity_purchased) => {
 //     };
 //   });
 // };
-
-
 
 // export const Exchange = (req, res) => {
 //   const { customer, items, total } = req.body;
@@ -3319,9 +3317,6 @@ const updateStockAfterSale = async (item_id, quantity_purchased) => {
 //   });
 // };
 
-
-
-
 // export const Exchange = (req, res) => {
 //   const { customer, items } = req.body;
 //   const { customer_name, number, date } = customer;
@@ -3479,9 +3474,6 @@ const updateStockAfterSale = async (item_id, quantity_purchased) => {
 //   });
 // };
 
-
-
-
 // export const getAllSales = (req, res) => {
 //   const query = `
 //     SELECT
@@ -3529,16 +3521,6 @@ const updateStockAfterSale = async (item_id, quantity_purchased) => {
 //     });
 //   });
 // };
-
-
-
-
-
-
-
-
-
-
 
 // export const getAllSales = (req, res) => {
 //   const query = `
@@ -3738,77 +3720,175 @@ const updateStockAfterSale = async (item_id, quantity_purchased) => {
 //   });
 // };
 
+// export const getAllSales = (req, res) => {
+//   const query = `
+//     SELECT
+//       'sale' AS record_type,
+//       s.sales_id AS sales_id,  -- Using sales_id from the sales table
+//       s.date,
+//       s.customer_name,
+//       s.customer_id,
+//       s.item,
+//       s.amount_per_item,
+//       s.quantity_purchased,  -- Directly using quantity_purchased for sales
+//       s.amount_paid,
+//       s.total_sale_value,
+//       s.brand,
+//       s.bank_or_pos,
+//       s.bank_name,
+//       s.number,
+//       s.supplied_by,
+//       s.status,
+//       s.created_at,
+//       s.transaction_type,  -- Using transaction_type from the sales table
+//       c.number AS customer_number
+//     FROM sales s
+//     JOIN customers c ON s.customer_id = c.customer_id
+
+//     UNION ALL
+
+//     SELECT
+//       'exchange' AS record_type,
+//       e.exchange_id AS sales_id,  -- Using exchange_id from the exchanges table
+//       e.date,
+//       e.customer_name,
+//       e.customer_id,
+//       e.item,
+//       NULL AS amount_per_item,
+//       e.quantity AS quantity,  -- Using e.quantity for exchanged items
+//       NULL AS amount_paid,
+//       NULL AS total_sale_value,
+//       NULL AS brand,
+//       NULL AS bank_or_pos,
+//       NULL AS bank_name,
+//       NULL AS number,
+//       NULL AS supplied_by,
+//       NULL AS status,
+//       e.created_at,
+//       'exchange' AS transaction_type,  -- Set transaction_type for exchanges
+//       c.number AS customer_number
+//     FROM exchanges e
+//     JOIN customers c ON e.customer_id = c.customer_id
+
+//     UNION ALL
+
+//     SELECT
+//       'return' AS record_type,
+//       r.return_id AS sales_id,  -- Using return_id from the returns table
+//       r.date,
+//       r.customer_name,
+//       r.customer_id,
+//       r.item,
+//       NULL AS amount_per_item,
+//       r.quantity AS quantity,  -- Using r.quantity for returned items
+//       NULL AS amount_paid,
+//       NULL AS total_sale_value,
+//       NULL AS brand,
+//       NULL AS bank_or_pos,
+//       NULL AS bank_name,
+//       NULL AS number,
+//       NULL AS supplied_by,
+//       NULL AS status,
+//       r.created_at,
+//       'return' AS transaction_type,  -- Set transaction_type for returns
+//       c.number AS customer_number
+//     FROM returns r
+//     JOIN customers c ON r.customer_id = c.customer_id
+//   `;
+
+//   db.query(query, (error, results) => {
+//     if (error) {
+//       console.error("Error fetching all sales, exchanges, and returns:", error);
+//       return res.status(500).json({ error: "Error fetching all sales." });
+//     }
+
+//     if (results.length === 0) {
+//       return res.status(404).json({ message: "No sales found." });
+//     }
+
+//     // Log the fetched sales data for debugging
+//     console.log("Fetched Sales Data:");
+//     results.forEach((sale, index) => {
+//       console.log(`Sale ${index + 1}:`, sale);
+//     });
+
+//     res.status(200).json({
+//       message: "All sales fetched successfully!",
+//       sales: results,
+//     });
+//   });
+// };
+
+
+
+
+
+
+
+// salesController.js
 export const getAllSales = (req, res) => {
   const query = `
     SELECT
       'sale' AS record_type,
-      s.sales_id AS sales_id,  -- Using sales_id from the sales table
+      s.sales_id AS sales_id,  // Using sales_id from the sales table
+      s.item_id,
       s.date,
       s.customer_name,
       s.customer_id,
       s.item,
       s.amount_per_item,
-      s.quantity_purchased,  -- Directly using quantity_purchased for sales
+      s.quantity_purchased,  // Directly using quantity_purchased from the sales table
       s.amount_paid,
-      s.total_sale_value,
       s.brand,
       s.bank_or_pos,
       s.bank_name,
       s.number,
       s.supplied_by,
       s.status,
+      s.total_sale_value,
       s.created_at,
-      s.transaction_type,  -- Using transaction_type from the sales table
+      s.transaction_type,  // Using transaction_type from the sales table
       c.number AS customer_number
     FROM sales s
     JOIN customers c ON s.customer_id = c.customer_id
+  `;
 
-    UNION ALL
+  db.query(query, (error, results) => {
+    if (error) {
+      console.error("Error fetching sales:", error);
+      return res.status(500).json({ error: "Error fetching sales." });
+    }
 
-    SELECT
-      'exchange' AS record_type,
-      e.exchange_id AS sales_id,  -- Using exchange_id from the exchanges table
-      e.date,
-      e.customer_name,
-      e.customer_id,
-      e.item,
-      NULL AS amount_per_item,
-      e.quantity AS quantity,  -- Using e.quantity for exchanged items
-      NULL AS amount_paid,
-      NULL AS total_sale_value,
-      NULL AS brand,
-      NULL AS bank_or_pos,
-      NULL AS bank_name,
-      NULL AS number,
-      NULL AS supplied_by,
-      NULL AS status,
-      e.created_at,
-      'exchange' AS transaction_type,  -- Set transaction_type for exchanges
-      c.number AS customer_number
-    FROM exchanges e
-    JOIN customers c ON e.customer_id = c.customer_id
+    if (results.length === 0) {
+      return res.status(404).json({ message: "No sales found." });
+    }
 
-    UNION ALL
+    res.status(200).json({
+      message: "Sales fetched successfully!",
+      sales: results,
+    });
+  });
+};
 
+
+// returnsController.js
+export const getAllReturns = (req, res) => {
+  const query = `
     SELECT
       'return' AS record_type,
-      r.return_id AS sales_id,  -- Using return_id from the returns table
-      r.date,
+      r.return_id AS return_id,  // Using return_id from the returns table
       r.customer_name,
       r.customer_id,
+      r.date,
+      r.item_id,
       r.item,
-      NULL AS amount_per_item,
-      r.quantity AS quantity,  -- Using r.quantity for returned items
-      NULL AS amount_paid,
-      NULL AS total_sale_value,
-      NULL AS brand,
-      NULL AS bank_or_pos,
-      NULL AS bank_name,
-      NULL AS number,
-      NULL AS supplied_by,
-      NULL AS status,
+      r.quantity,
       r.created_at,
-      'return' AS transaction_type,  -- Set transaction_type for returns
+      r.transaction_type,  // Using transaction_type from the returns table
+      r.amount_paid,
+      r.amount_per_item,
+      r.refund_amount,
+      r.payback,
       c.number AS customer_number
     FROM returns r
     JOIN customers c ON r.customer_id = c.customer_id
@@ -3816,27 +3896,61 @@ export const getAllSales = (req, res) => {
 
   db.query(query, (error, results) => {
     if (error) {
-      console.error("Error fetching all sales, exchanges, and returns:", error);
-      return res.status(500).json({ error: "Error fetching all sales." });
+      console.error("Error fetching returns:", error);
+      return res.status(500).json({ error: "Error fetching returns." });
     }
 
     if (results.length === 0) {
-      return res.status(404).json({ message: "No sales found." });
+      return res.status(404).json({ message: "No returns found." });
     }
 
-    // Log the fetched sales data for debugging
-    console.log("Fetched Sales Data:");
-    results.forEach((sale, index) => {
-      console.log(`Sale ${index + 1}:`, sale);
-    });
-
     res.status(200).json({
-      message: "All sales fetched successfully!",
-      sales: results,
+      message: "Returns fetched successfully!",
+      returns: results,
     });
   });
 };
 
+// exchangesController.js
+export const getAllExchanges = (req, res) => {
+  const query = `
+    SELECT
+      'exchange' AS record_type,
+      e.exchange_id AS exchange_id,  // Using exchange_id from the exchanges table
+      e.customer_name,
+      e.customer_id,
+      e.date,
+      e.item_id,
+      e.item,
+      e.quantity,
+      e.created_at,
+      e.updated,  // Fetching the updated timestamp
+      e.transaction_type,  // Using transaction_type from the exchanges table
+      e.amount_paid,
+      e.amount_per_item,
+      e.refund_amount,
+      e.payback,
+      c.number AS customer_number
+    FROM exchanges e
+    JOIN customers c ON e.customer_id = c.customer_id
+  `;
+
+  db.query(query, (error, results) => {
+    if (error) {
+      console.error("Error fetching exchanges:", error);
+      return res.status(500).json({ error: "Error fetching exchanges." });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: "No exchanges found." });
+    }
+
+    res.status(200).json({
+      message: "Exchanges fetched successfully!",
+      exchanges: results,
+    });
+  });
+};
 
 export const addSale = (req, res) => {
   const {
@@ -4192,8 +4306,6 @@ export const updateSaleStatus = (req, res) => {
   });
 };
 
-
-
 export const Exchange = (req, res) => {
   const { customer, items } = req.body;
   const { customer_name, number, date } = customer;
@@ -4216,7 +4328,9 @@ export const Exchange = (req, res) => {
     db.query(checkCustomerQuery, [number], (err, customerResults) => {
       if (err) {
         console.error("Error executing checkCustomerQuery:", err);
-        return db.rollback(() => res.status(500).json({ error: "Error checking customer" }));
+        return db.rollback(() =>
+          res.status(500).json({ error: "Error checking customer" })
+        );
       }
 
       let customerId;
@@ -4229,7 +4343,9 @@ export const Exchange = (req, res) => {
         db.query(insertCustomerQuery, [customer_name, number], (err) => {
           if (err) {
             console.error("Error inserting customer:", err);
-            return db.rollback(() => res.status(500).json({ error: "Error inserting customer" }));
+            return db.rollback(() =>
+              res.status(500).json({ error: "Error inserting customer" })
+            );
           }
 
           // Fetch the new customer's ID
@@ -4237,7 +4353,9 @@ export const Exchange = (req, res) => {
           db.query(fetchCustomerIdQuery, [number], (err, newCustomerResult) => {
             if (err) {
               console.error("Error fetching customer ID:", err);
-              return db.rollback(() => res.status(500).json({ error: "Error fetching customer ID" }));
+              return db.rollback(() =>
+                res.status(500).json({ error: "Error fetching customer ID" })
+              );
             }
 
             customerId = newCustomerResult[0].customer_id;
@@ -4259,7 +4377,9 @@ export const Exchange = (req, res) => {
           db.commit((err) => {
             if (err) {
               console.error("Transaction commit error:", err);
-              return db.rollback(() => res.status(500).json({ error: "Error committing transaction." }));
+              return db.rollback(() =>
+                res.status(500).json({ error: "Error committing transaction." })
+              );
             }
             res.send("Exchange added successfully.");
           });
@@ -4282,12 +4402,18 @@ export const Exchange = (req, res) => {
         db.query(checkStockQuery, [itemName], (err, stockResults) => {
           if (err) {
             console.error("Error executing checkStockQuery:", err);
-            return db.rollback(() => res.status(500).json({ error: "Error checking stock" }));
+            return db.rollback(() =>
+              res.status(500).json({ error: "Error checking stock" })
+            );
           }
 
           if (stockResults.length === 0) {
             console.error(`Item '${itemName}' not found in stock.`);
-            return db.rollback(() => res.status(400).json({ error: `Item '${itemName}' not found in stock.` }));
+            return db.rollback(() =>
+              res
+                .status(400)
+                .json({ error: `Item '${itemName}' not found in stock.` })
+            );
           }
 
           const stockItem = stockResults[0];
@@ -4300,28 +4426,48 @@ export const Exchange = (req, res) => {
             INSERT INTO exchanges (exchange_id, date, customer_id, customer_name, item_id, item, quantity, amount_per_item, amount_paid, refund_amount, payback)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           `;
-          db.query(insertExchangeQuery, [exchangeId, date, customerId, customer_name, id, itemName, qty, amount_per_item, amount_paid, refund_amount, payback], (err) => {
-            if (err) {
-              console.error("Error executing insertExchangeQuery:", err);
-              return db.rollback(() => res.status(500).json({ error: "Error inserting exchange" }));
-            }
+          db.query(
+            insertExchangeQuery,
+            [
+              exchangeId,
+              date,
+              customerId,
+              customer_name,
+              id,
+              itemName,
+              qty,
+              amount_per_item,
+              amount_paid,
+              refund_amount,
+              payback,
+            ],
+            (err) => {
+              if (err) {
+                console.error("Error executing insertExchangeQuery:", err);
+                return db.rollback(() =>
+                  res.status(500).json({ error: "Error inserting exchange" })
+                );
+              }
 
-            // Update the stock for the exchanged item
-            const updateStockQuery = `
+              // Update the stock for the exchanged item
+              const updateStockQuery = `
               UPDATE stock
               SET opening_qty = opening_qty - ?
               WHERE id = ?
             `;
-            db.query(updateStockQuery, [qty, id], (err) => {
-              if (err) {
-                console.error("Error executing updateStockQuery:", err);
-                return db.rollback(() => res.status(500).json({ error: "Error updating stock" }));
-              }
+              db.query(updateStockQuery, [qty, id], (err) => {
+                if (err) {
+                  console.error("Error executing updateStockQuery:", err);
+                  return db.rollback(() =>
+                    res.status(500).json({ error: "Error updating stock" })
+                  );
+                }
 
-              itemProcessed++;
-              processNextItem();
-            });
-          });
+                itemProcessed++;
+                processNextItem();
+              });
+            }
+          );
         });
       };
 
@@ -4329,7 +4475,6 @@ export const Exchange = (req, res) => {
     };
   });
 };
-
 
 export const Return = (req, res) => {
   const { customer, items } = req.body;
@@ -4352,43 +4497,59 @@ export const Return = (req, res) => {
     const checkCustomerQuery = `
       SELECT customer_id FROM customers WHERE customer_name = ? AND number = ?
     `;
-    db.query(checkCustomerQuery, [customer_name, number], (err, customerResults) => {
-      if (err) {
-        console.error("Error executing checkCustomerQuery:", err);
-        return db.rollback(() => res.status(500).json({ error: "Error checking customer" }));
-      }
+    db.query(
+      checkCustomerQuery,
+      [customer_name, number],
+      (err, customerResults) => {
+        if (err) {
+          console.error("Error executing checkCustomerQuery:", err);
+          return db.rollback(() =>
+            res.status(500).json({ error: "Error checking customer" })
+          );
+        }
 
-      let customerId;
-      if (customerResults.length === 0) {
-        // Customer does not exist, insert them
-        const insertCustomerQuery = `
+        let customerId;
+        if (customerResults.length === 0) {
+          // Customer does not exist, insert them
+          const insertCustomerQuery = `
           INSERT INTO customers (customer_id, customer_name, number, created_at) 
           VALUES (UUID(), ?, ?, NOW())
         `;
-        db.query(insertCustomerQuery, [customer_name, number], (err) => {
-          if (err) {
-            console.error("Error inserting customer:", err);
-            return db.rollback(() => res.status(500).json({ error: "Error inserting customer" }));
-          }
-
-          // Fetch the new customer ID
-          const fetchCustomerIdQuery = `SELECT customer_id FROM customers WHERE number = ?`;
-          db.query(fetchCustomerIdQuery, [number], (err, newCustomerResult) => {
+          db.query(insertCustomerQuery, [customer_name, number], (err) => {
             if (err) {
-              console.error("Error fetching new customer ID:", err);
-              return db.rollback(() => res.status(500).json({ error: "Error fetching customer ID" }));
+              console.error("Error inserting customer:", err);
+              return db.rollback(() =>
+                res.status(500).json({ error: "Error inserting customer" })
+              );
             }
 
-            customerId = newCustomerResult[0].customer_id;
-            processItems(customerId);
+            // Fetch the new customer ID
+            const fetchCustomerIdQuery = `SELECT customer_id FROM customers WHERE number = ?`;
+            db.query(
+              fetchCustomerIdQuery,
+              [number],
+              (err, newCustomerResult) => {
+                if (err) {
+                  console.error("Error fetching new customer ID:", err);
+                  return db.rollback(() =>
+                    res
+                      .status(500)
+                      .json({ error: "Error fetching customer ID" })
+                  );
+                }
+
+                customerId = newCustomerResult[0].customer_id;
+                processItems(customerId);
+              }
+            );
           });
-        });
-      } else {
-        // Customer exists, use their ID
-        customerId = customerResults[0].customer_id;
-        processItems(customerId);
+        } else {
+          // Customer exists, use their ID
+          customerId = customerResults[0].customer_id;
+          processItems(customerId);
+        }
       }
-    });
+    );
 
     const processItems = (customerId) => {
       const returnId = uuidv4(); // Generate returnId once for all items
@@ -4401,7 +4562,9 @@ export const Return = (req, res) => {
           db.commit((err) => {
             if (err) {
               console.error("Transaction commit error:", err);
-              return db.rollback(() => res.status(500).json({ error: "Error committing transaction" }));
+              return db.rollback(() =>
+                res.status(500).json({ error: "Error committing transaction" })
+              );
             }
 
             // Success response with return ID and total refund amount
@@ -4430,7 +4593,9 @@ export const Return = (req, res) => {
         db.query(checkStockQuery, [itemName], (err, stockResults) => {
           if (err) {
             console.error("Error executing checkStockQuery:", err);
-            return db.rollback(() => res.status(500).json({ error: "Error checking stock" }));
+            return db.rollback(() =>
+              res.status(500).json({ error: "Error checking stock" })
+            );
           }
 
           if (stockResults.length === 0) {
@@ -4454,11 +4619,24 @@ export const Return = (req, res) => {
           `;
           db.query(
             insertReturnQuery,
-            [returnId, date, customerId, customer_name, id, itemName, qty, amount_per_item, amount_paid, refund_amount],
+            [
+              returnId,
+              date,
+              customerId,
+              customer_name,
+              id,
+              itemName,
+              qty,
+              amount_per_item,
+              amount_paid,
+              refund_amount,
+            ],
             (err) => {
               if (err) {
                 console.error("Error executing insertReturnQuery:", err);
-                return db.rollback(() => res.status(500).json({ error: "Error inserting return" }));
+                return db.rollback(() =>
+                  res.status(500).json({ error: "Error inserting return" })
+                );
               }
 
               // Update the stock with the returned quantity (increase stock)
@@ -4470,7 +4648,9 @@ export const Return = (req, res) => {
               db.query(updateStockQuery, [qty, id], (err) => {
                 if (err) {
                   console.error("Error executing updateStockQuery:", err);
-                  return db.rollback(() => res.status(500).json({ error: "Error updating stock" }));
+                  return db.rollback(() =>
+                    res.status(500).json({ error: "Error updating stock" })
+                  );
                 }
 
                 itemProcessed++;
@@ -4485,7 +4665,6 @@ export const Return = (req, res) => {
     };
   });
 };
-
 
 export const getAllCustomers = (req, res) => {
   const query = "SELECT * FROM customers";

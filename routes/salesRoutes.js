@@ -7,14 +7,22 @@ import {
   Exchange,
   getAllCustomers,
   getCustomerByName,
-  getSaleById
+  getSaleById,
+  getAllExchanges,
+  getAllReturns
 } from "../controllers/salesController.js";
 import { authMiddleware } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
 // Get all sales
-router.get("/", getAllSales);
+// router.get("/", getAllSales);
+
+router.get('/sales', getAllSales);
+
+router.get('/exchanges', getAllExchanges);
+
+router.get('/returns', getAllReturns);
 
 // Add a new sale
 router.post("/add", addSale);
