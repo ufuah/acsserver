@@ -3825,19 +3825,147 @@ const updateStockAfterSale = async (item_id, quantity_purchased) => {
 
 
 
+// // salesController.js
+// export const getAllSales = (req, res) => {
+//   const query = `
+//     SELECT
+//       'sale' AS record_type,
+//       s.sales_id AS sales_id,  // Using sales_id from the sales table
+//       s.item_id,
+//       s.date,
+//       s.customer_name,
+//       s.customer_id,
+//       s.item,
+//       s.amount_per_item,
+//       s.quantity_purchased,  // Directly using quantity_purchased from the sales table
+//       s.amount_paid,
+//       s.brand,
+//       s.bank_or_pos,
+//       s.bank_name,
+//       s.number,
+//       s.supplied_by,
+//       s.status,
+//       s.total_sale_value,
+//       s.created_at,
+//       s.transaction_type,  // Using transaction_type from the sales table
+//       c.number AS customer_number
+//     FROM sales s
+//     JOIN customers c ON s.customer_id = c.customer_id
+//   `;
+
+//   db.query(query, (error, results) => {
+//     if (error) {
+//       console.error("Error fetching sales:", error);
+//       return res.status(500).json({ error: "Error fetching sales." });
+//     }
+
+//     if (results.length === 0) {
+//       return res.status(404).json({ message: "No sales found." });
+//     }
+
+//     res.status(200).json({
+//       message: "Sales fetched successfully!",
+//       sales: results,
+//     });
+//   });
+// };
+
+
+// // returnsController.js
+// export const getAllReturns = (req, res) => {
+//   const query = `
+//     SELECT
+//       'return' AS record_type,
+//       r.return_id AS return_id,  // Using return_id from the returns table
+//       r.customer_name,
+//       r.customer_id,
+//       r.date,
+//       r.item_id,
+//       r.item,
+//       r.quantity,
+//       r.created_at,
+//       r.transaction_type,  // Using transaction_type from the returns table
+//       r.amount_paid,
+//       r.amount_per_item,
+//       r.refund_amount,
+//       r.payback,
+//       c.number AS customer_number
+//     FROM returns r
+//     JOIN customers c ON r.customer_id = c.customer_id
+//   `;
+
+//   db.query(query, (error, results) => {
+//     if (error) {
+//       console.error("Error fetching returns:", error);
+//       return res.status(500).json({ error: "Error fetching returns." });
+//     }
+
+//     if (results.length === 0) {
+//       return res.status(404).json({ message: "No returns found." });
+//     }
+
+//     res.status(200).json({
+//       message: "Returns fetched successfully!",
+//       returns: results,
+//     });
+//   });
+// };
+
+// // exchangesController.js
+// export const getAllExchanges = (req, res) => {
+//   const query = `
+//     SELECT
+//       'exchange' AS record_type,
+//       e.exchange_id AS exchange_id,  // Using exchange_id from the exchanges table
+//       e.customer_name,
+//       e.customer_id,
+//       e.date,
+//       e.item_id,
+//       e.item,
+//       e.quantity,
+//       e.created_at,
+//       e.updated,  // Fetching the updated timestamp
+//       e.transaction_type,  // Using transaction_type from the exchanges table
+//       e.amount_paid,
+//       e.amount_per_item,
+//       e.refund_amount,
+//       e.payback,
+//       c.number AS customer_number
+//     FROM exchanges e
+//     JOIN customers c ON e.customer_id = c.customer_id
+//   `;
+
+//   db.query(query, (error, results) => {
+//     if (error) {
+//       console.error("Error fetching exchanges:", error);
+//       return res.status(500).json({ error: "Error fetching exchanges." });
+//     }
+
+//     if (results.length === 0) {
+//       return res.status(404).json({ message: "No exchanges found." });
+//     }
+
+//     res.status(200).json({
+//       message: "Exchanges fetched successfully!",
+//       exchanges: results,
+//     });
+//   });
+// };
+
+
 // salesController.js
 export const getAllSales = (req, res) => {
   const query = `
     SELECT
       'sale' AS record_type,
-      s.sales_id AS sales_id,  // Using sales_id from the sales table
+      s.sales_id AS sales_id,
       s.item_id,
       s.date,
       s.customer_name,
       s.customer_id,
       s.item,
       s.amount_per_item,
-      s.quantity_purchased,  // Directly using quantity_purchased from the sales table
+      s.quantity_purchased,
       s.amount_paid,
       s.brand,
       s.bank_or_pos,
@@ -3847,7 +3975,7 @@ export const getAllSales = (req, res) => {
       s.status,
       s.total_sale_value,
       s.created_at,
-      s.transaction_type,  // Using transaction_type from the sales table
+      s.transaction_type,
       c.number AS customer_number
     FROM sales s
     JOIN customers c ON s.customer_id = c.customer_id
@@ -3870,13 +3998,12 @@ export const getAllSales = (req, res) => {
   });
 };
 
-
 // returnsController.js
 export const getAllReturns = (req, res) => {
   const query = `
     SELECT
       'return' AS record_type,
-      r.return_id AS return_id,  // Using return_id from the returns table
+      r.return_id AS return_id,
       r.customer_name,
       r.customer_id,
       r.date,
@@ -3884,7 +4011,7 @@ export const getAllReturns = (req, res) => {
       r.item,
       r.quantity,
       r.created_at,
-      r.transaction_type,  // Using transaction_type from the returns table
+      r.transaction_type,
       r.amount_paid,
       r.amount_per_item,
       r.refund_amount,
@@ -3916,7 +4043,7 @@ export const getAllExchanges = (req, res) => {
   const query = `
     SELECT
       'exchange' AS record_type,
-      e.exchange_id AS exchange_id,  // Using exchange_id from the exchanges table
+      e.exchange_id AS exchange_id,
       e.customer_name,
       e.customer_id,
       e.date,
@@ -3924,8 +4051,8 @@ export const getAllExchanges = (req, res) => {
       e.item,
       e.quantity,
       e.created_at,
-      e.updated,  // Fetching the updated timestamp
-      e.transaction_type,  // Using transaction_type from the exchanges table
+      e.updated,
+      e.transaction_type,
       e.amount_paid,
       e.amount_per_item,
       e.refund_amount,
@@ -3951,6 +4078,9 @@ export const getAllExchanges = (req, res) => {
     });
   });
 };
+
+
+
 
 export const addSale = (req, res) => {
   const {
