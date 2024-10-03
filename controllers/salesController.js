@@ -3953,11 +3953,136 @@ const updateStockAfterSale = async (item_id, quantity_purchased) => {
 // };
 
 
+// // salesController.js
+// export const getAllSales = (req, res) => {
+//   const query = `
+//     SELECT
+//       'sale' AS record_type,
+//       s.sales_id AS sales_id,
+//       s.item_id,
+//       s.date,
+//       s.customer_name,
+//       s.customer_id,
+//       s.item,
+//       s.amount_per_item,
+//       s.quantity_purchased,
+//       s.amount_paid,
+//       s.brand,
+//       s.bank_or_pos,
+//       s.bank_name,
+//       s.number,
+//       s.supplied_by,
+//       s.status,
+//       s.total_sale_value,
+//       s.created_at,
+//       s.transaction_type,
+//       c.number AS customer_number
+//     FROM sales s
+//     JOIN customers c ON s.customer_id = c.customer_id
+//   `;
+
+//   db.query(query, (error, results) => {
+//     if (error) {
+//       console.error("Error fetching sales:", error);
+//       return res.status(500).json({ error: "Error fetching sales." });
+//     }
+
+//     if (results.length === 0) {
+//       return res.status(404).json({ message: "No sales found." });
+//     }
+
+//     res.status(200).json({
+//       message: "Sales fetched successfully!",
+//       sales: results,
+//     });
+//   });
+// };
+
+// // returnsController.js
+// export const getAllReturns = (req, res) => {
+//   const query = `
+//     SELECT
+//       'return' AS record_type,
+//       r.return_id AS return_id,
+//       r.customer_name,
+//       r.customer_id,
+//       r.date,
+//       r.item_id,
+//       r.item,
+//       r.quantity,
+//       r.created_at,
+//       r.transaction_type,
+//       r.amount_paid,
+//       r.amount_per_item,
+//       r.refund_amount,
+//       r.payback,
+//       c.number AS customer_number
+//     FROM returns r
+//     JOIN customers c ON r.customer_id = c.customer_id
+//   `;
+
+//   db.query(query, (error, results) => {
+//     if (error) {
+//       console.error("Error fetching returns:", error);
+//       return res.status(500).json({ error: "Error fetching returns." });
+//     }
+
+//     if (results.length === 0) {
+//       return res.status(404).json({ message: "No returns found." });
+//     }
+
+//     res.status(200).json({
+//       message: "Returns fetched successfully!",
+//       returns: results,
+//     });
+//   });
+// };
+
+// // exchangesController.js
+// export const getAllExchanges = (req, res) => {
+//   const query = `
+//     SELECT
+//       'exchange' AS record_type,
+//       e.exchange_id AS exchange_id,
+//       e.customer_name,
+//       e.customer_id,
+//       e.date,
+//       e.item_id,
+//       e.item,
+//       e.quantity,
+//       e.created_at,
+//       e.updated,
+//       e.transaction_type,
+//       e.amount_paid,
+//       e.amount_per_item,
+//       e.refund_amount,
+//       e.payback,
+//       c.number AS customer_number
+//     FROM exchanges e
+//     JOIN customers c ON e.customer_id = c.customer_id
+//   `;
+
+//   db.query(query, (error, results) => {
+//     if (error) {
+//       console.error("Error fetching exchanges:", error);
+//       return res.status(500).json({ error: "Error fetching exchanges." });
+//     }
+
+//     if (results.length === 0) {
+//       return res.status(404).json({ message: "No exchanges found." });
+//     }
+
+//     res.status(200).json({
+//       message: "Exchanges fetched successfully!",
+//       exchanges: results,
+//     });
+//   });
+// };
+
 // salesController.js
 export const getAllSales = (req, res) => {
   const query = `
     SELECT
-      'sale' AS record_type,
       s.sales_id AS sales_id,
       s.item_id,
       s.date,
@@ -4002,7 +4127,6 @@ export const getAllSales = (req, res) => {
 export const getAllReturns = (req, res) => {
   const query = `
     SELECT
-      'return' AS record_type,
       r.return_id AS return_id,
       r.customer_name,
       r.customer_id,
@@ -4042,7 +4166,6 @@ export const getAllReturns = (req, res) => {
 export const getAllExchanges = (req, res) => {
   const query = `
     SELECT
-      'exchange' AS record_type,
       e.exchange_id AS exchange_id,
       e.customer_name,
       e.customer_id,
@@ -4078,7 +4201,6 @@ export const getAllExchanges = (req, res) => {
     });
   });
 };
-
 
 
 
