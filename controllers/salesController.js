@@ -3668,7 +3668,7 @@ export const getAllSales = (req, res) => {
 
     SELECT
       'exchange' AS record_type,
-      e.sales_id AS sales_id,  -- Using sales_id from the exchanges table
+      e.exchange_id AS sales_id,  -- Using exchange_id from the exchanges table
       e.date,
       e.customer_name,
       e.customer_id,
@@ -3693,7 +3693,7 @@ export const getAllSales = (req, res) => {
 
     SELECT
       'return' AS record_type,
-      r.sales_id AS sales_id,  -- Using sales_id from the returns table
+      r.return_id AS sales_id,  -- Using return_id from the returns table
       r.date,
       r.customer_name,
       r.customer_id,
@@ -3737,6 +3737,7 @@ export const getAllSales = (req, res) => {
     });
   });
 };
+
 
 
 export const addSale = (req, res) => {
