@@ -1326,268 +1326,6 @@ const updateStockAfterSale = async (item_id, quantity_purchased) => {
 //   });
 // };
 
-export const addSale = (req, res) => {
-  const {
-    date,
-    customer_name,
-    brand,
-    bank_or_pos,
-    supplied_by,
-    status,
-    number,
-    items
-  } = req.body;
-
-  const itemsDetails = items || [];
-
-  if (
-    !date ||
-    !customer_name ||
-    !number ||
-    !brand ||
-    !bank_or_pos ||
-    itemsDetails.length === 0
-  ) {
-    return res.status(400).json({
-      error: "Please fill out all required fields and add at least one item.",
-    });
-  }
-
-  const sales_id = uuidv4();
-  let processedItems = 0;
-  const totalItems = itemsDetails.length;
-
-  // Check if customer with the same number exists
-  const customerNumberQuery = `
-    SELECT customer_id, customer_name 
-    FROM customers 
-    WHERE number = ?
-  `;
-  db.query(customerNumberQuery, [number], function (error, numberResults) {
-    if (error) {
-      console.error("Error checking customer by number:", error);
-      return res
-        .status(500)
-        .json({ error: "Error checking customer by number." });
-    }
-
-    // Check if customer with the same name exists
-    const customerNameQuery = `
-      SELECT customer_id, number 
-      FROM customers 
-      WHERE customer_name = ?
-    `;
-    db.query(customerNameQuery, [customer_name], function (error, nameResults) {
-      if (error) {
-        console.error("Error checking customer by name:", error);
-        return res
-          .status(500)
-          .json({ error: "Error checking customer by name." });
-      }
-
-      if (nameResults.length > 0) {
-        // Customer name exists, but we need to check the number
-        const existingCustomer = nameResults[0];
-
-        if (existingCustomer.number !== number) {
-          // Name exists but number does not match
-          return res.status(400).json({
-            error: `The customer name "${customer_name}" exists but the phone number provided does not match the existing record. The associated number is "${existingCustomer.number}". Please provide the correct phone number.`,
-          });
-        } else {
-          // The name and number match the same customer, process the sale
-          processSale(existingCustomer.customer_id);
-        }
-      } else if (numberResults.length > 0) {
-        // Number exists, but the name is different
-        const existingCustomerByNumber = numberResults[0];
-        return res.status(400).json({
-          error: `The phone number "${number}" is already associated with another customer: "${existingCustomerByNumber.customer_name}". Please use a different phone number.`,
-        });
-      } else {
-        // No match found, insert the new customer
-        const customer_id = uuidv4(); // Generate a new customer_id
-
-        const insertCustomerQuery = `
-          INSERT INTO customers (customer_id, customer_name, number, created_at)
-          VALUES (?, ?, ?, ?)
-        `;
-        const customerValues = [customer_id, customer_name, number, new Date()];
-
-        db.query(insertCustomerQuery, customerValues, (err) => {
-          if (err) {
-            console.error("Error inserting new customer:", err);
-            return res
-              .status(500)
-              .json({ error: "Error adding new customer." });
-          }
-
-          processSale(customer_id);
-        });
-      }
-    });
-
-    // Function to process sale for each item
-    function processSale(customer_id) {
-      itemsDetails.forEach((item) => {
-        const query = `
-          SELECT id, closing_stock, opening_qty 
-          FROM stock 
-          WHERE description = ? AND record_type = 'day_to_day'
-        `;
-        db.query(query, [item.item], function (error, results) {
-          if (error) {
-            console.error("Error fetching item from stock:", error);
-            return res
-              .status(500)
-              .json({ error: "Error fetching item from stock." });
-          }
-
-          if (results.length > 0) {
-            const item_id = results[0].id;
-            const itemStock = results[0];
-
-            // Log stock details retrieved
-            console.log(
-              `Item: ${item.item}, Closing Stock: ${itemStock.closing_stock}, Opening Qty: ${itemStock.opening_qty}`
-            );
-
-            // Check if the quantity requested exceeds available stock
-            if (item.quantity_purchased > itemStock.closing_stock) {
-              return res.status(400).json({
-                error: `Insufficient stock for item "${item.item}". Available stock is ${itemStock.closing_stock}, but the requested quantity is ${item.quantity_purchased}.`,
-              });
-            }
-
-            if (status === "supplied") {
-              // Update only opening_qty, as closing_stock is a generated column
-              const updatedOpeningStock =
-                itemStock.opening_qty - item.quantity_purchased;
-
-              // Log stock values before update
-              console.log(`Updating Stock for Item: ${item.item}`);
-              console.log(`Updated Opening Qty: ${updatedOpeningStock}`);
-
-              const updateStockQuery = `
-                UPDATE stock 
-                SET opening_qty = ? 
-                WHERE id = ?
-              `;
-              db.query(
-                updateStockQuery,
-                [updatedOpeningStock, item_id],
-                (err) => {
-                  if (err) {
-                    console.error("Error updating stock:", err);
-                    return res
-                      .status(500)
-                      .json({ error: "Error updating stock." });
-                  }
-
-                  // Log successful update
-                  console.log(
-                    `Stock updated successfully for Item: ${item.item}`
-                  );
-                  insertSaleRecord(item_id, customer_id, item);
-                }
-              );
-            } else {
-              // Process sale if status is not 'supplied'
-              insertSaleRecord(item_id, customer_id, item);
-            }
-          } else {
-            console.error(
-              "Item not found in stock with 'day_to_day' record_type"
-            );
-            return res.status(400).json({
-              error: "Item not found in stock with 'day_to_day' record_type.",
-            });
-          }
-        });
-      });
-    }
-
-    // Function to insert sale record
-    function insertSaleRecord(item_id, customer_id, item) {
-      const insertQuery = `
-        INSERT INTO sales (
-          sales_id,
-          date,
-          customer_name,
-          customer_id,
-          item,
-          item_id,
-          amount_per_item,
-          quantity_purchased,
-          amount_paid,
-          brand,
-          bank_or_pos,
-          bank_name,
-          number,
-          supplied_by,
-          status,
-          created_at,
-          transaction_type
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `;
-
-      const amount_paid = item.amount_per_item * item.quantity_purchased;
-      const values = [
-        sales_id,
-        date,
-        customer_name,
-        customer_id,
-        item.item,
-        item_id,
-        item.amount_per_item,
-        item.quantity_purchased,
-        amount_paid,
-        brand,
-        bank_or_pos,
-        null,  // bank_name is null for now, you can update it if needed
-        number,
-        supplied_by,
-        status,
-        new Date(),
-        "sales",
-      ];
-
-      db.query(insertQuery, values, (err) => {
-        if (err) {
-          console.error("Error inserting sale data:", err);
-          return res
-            .status(500)
-            .json({ error: "An error occurred while submitting the sale." });
-        }
-        processedItems++;
-
-        // Check if all items have been processed
-        if (processedItems === totalItems) {
-          // Send the sales_id along with the success message
-          return res.status(201).json({
-            message: "Sale added successfully!",
-            sales_id: sales_id, // Send the sales_id to the frontend
-          });
-        }
-      });
-    }
-  });
-};
-
-
-
-export const getSales = (req, res) => {
-  const query = "SELECT * FROM sales ORDER BY created_at DESC";
-
-  pool.query(query, (error, results) => {
-    if (error) {
-      console.error(error);
-      return res.status(500).json({ error: "Failed to retrieve sales" });
-    }
-
-    res.status(200).json(results);
-  });
-};
 
 // Get all sales associated with day-to-day stock
 
@@ -1675,53 +1413,6 @@ export const getSales = (req, res) => {
 //   });
 // };
 
-export const getAllSales = (req, res) => {
-  const query = `
-    SELECT 
-      s.sales_id, 
-      s.date, 
-      s.customer_name, 
-      s.customer_id, 
-      s.item, 
-      s.amount_per_item, 
-      s.quantity_purchased, 
-      s.amount_paid, 
-      s.total_sale_value,
-      s.brand,
-      s.bank_or_pos,
-      s.bank_name,
-      s.number,
-      s.supplied_by,
-      s.status,
-      s.created_at,
-      s.transaction_type,
-      c.number AS customer_number
-    FROM sales s
-    JOIN customers c ON s.customer_id = c.customer_id
-  `;
-
-  db.query(query, (error, results) => {
-    if (error) {
-      console.error("Error fetching all sales:", error);
-      return res.status(500).json({ error: "Error fetching all sales." });
-    }
-
-    if (results.length === 0) {
-      return res.status(404).json({ message: "No sales found." });
-    }
-
-    // Log the fetched sales data for debugging
-    console.log("Fetched Sales Data:");
-    results.forEach((sale, index) => {
-      console.log(`Sale ${index + 1}:`, sale);
-    });
-
-    res.status(200).json({
-      message: "All sales fetched successfully!",
-      sales: results,
-    });
-  });
-};
 
 // export const getAllSales = (req, res) => {
 //   const query = `
@@ -2921,8 +2612,511 @@ export const getAllSales = (req, res) => {
 //   });
 // };
 
+// export const updateSaleStatus = (req, res) => {
+//   const { saleId } = req.params;
+
+//   console.log(`Received request to update sale status for Sale ID: ${saleId}`);
+
+//   db.beginTransaction((err) => {
+//     if (err) {
+//       console.error("Transaction start error:", err);
+//       return res.status(500).json({ error: "Error starting transaction." });
+//     }
+
+//     const checkSaleQuery = `
+//       SELECT s.sales_id, s.item_id, s.quantity_purchased, s.status, s.number, st.opening_qty
+//       FROM sales s
+//       JOIN stock st ON s.item_id = st.id
+//       WHERE s.sales_id = ? AND s.status = 'pending'
+//     `;
+
+//     db.query(checkSaleQuery, [saleId], (err, saleResults) => {
+//       if (err) {
+//         console.error("Error executing checkSaleQuery:", err);
+//         return db.rollback(() =>
+//           res.status(500).json({ error: "Error checking sale." })
+//         );
+//       }
+
+//       if (saleResults.length === 0) {
+//         console.error("Sale not found or already supplied.");
+//         return db.rollback(() =>
+//           res.status(400).json({ error: "Sale not found or already supplied." })
+//         );
+//       }
+
+//       const sale = saleResults[0];
+//       console.log(`Sale found: ${JSON.stringify(sale)}`);
+
+//       const updateSaleQuery =
+//         "UPDATE sales SET status = 'supplied' WHERE sales_id = ?";
+//       db.query(updateSaleQuery, [saleId], (err) => {
+//         if (err) {
+//           console.error("Error executing updateSaleQuery:", err);
+//           return db.rollback(() =>
+//             res.status(500).json({ error: "Error updating sale status." })
+//           );
+//         }
+
+//         // Update the opening_qty only, don't touch the closing_stock
+//         const updateStockQuery = `
+//           UPDATE stock
+//           SET opening_qty = opening_qty - ?
+//           WHERE id = ?
+//         `;
+
+//         db.query(
+//           updateStockQuery,
+//           [sale.quantity_purchased, sale.item_id],
+//           (err) => {
+//             if (err) {
+//               console.error("Error executing updateStockQuery:", err);
+//               return db.rollback(() =>
+//                 res.status(500).json({ error: "Error updating stock." })
+//               );
+//             }
+
+//             console.log(
+//               `Stock updated. ${sale.quantity_purchased} units subtracted from item ID ${sale.item_id}.`
+//             );
+
+//             db.commit((err) => {
+//               if (err) {
+//                 console.error("Transaction commit error:", err);
+//                 return db.rollback(() =>
+//                   res
+//                     .status(500)
+//                     .json({ error: "Error committing transaction." })
+//                 );
+//               }
+//               res.send("Sale status updated to supplied and stock adjusted.");
+//             });
+//           }
+//         );
+//       });
+//     });
+//   });
+// };
+
+
+
+
+export const getAllSales = (req, res) => {
+  const query = `
+    SELECT
+      'sale' AS record_type,
+      s.sales_id AS id,
+      s.date,
+      s.customer_name,
+      s.customer_id,
+      s.item,
+      s.amount_per_item,
+      s.quantity_purchased AS quantity,
+      s.amount_paid,
+      s.total_sale_value,
+      s.brand,
+      s.bank_or_pos,
+      s.bank_name,
+      s.number,
+      s.supplied_by,
+      s.status,
+      s.created_at,
+      s.transaction_type,
+      c.number AS customer_number
+    FROM sales s
+    JOIN customers c ON s.customer_id = c.customer_id
+
+    UNION ALL
+
+    SELECT
+      'exchange' AS record_type,
+      e.exchange_id AS id,
+      e.date,
+      e.customer_name,
+      e.customer_id,
+      e.item,
+      NULL AS amount_per_item,
+      e.quantity,
+      NULL AS amount_paid,
+      NULL AS total_sale_value,
+      NULL AS brand,
+      NULL AS bank_or_pos,
+      NULL AS bank_name,
+      NULL AS number,
+      NULL AS supplied_by,
+      NULL AS status,
+      e.created_at,
+      NULL AS transaction_type,
+      c.number AS customer_number
+    FROM exchanges e
+    JOIN customers c ON e.customer_id = c.customer_id
+
+    UNION ALL
+
+    SELECT
+      'return' AS record_type,
+      r.return_id AS id,
+      r.date,
+      r.customer_name,
+      r.customer_id,
+      r.item,
+      NULL AS amount_per_item,
+      r.quantity,
+      NULL AS amount_paid,
+      NULL AS total_sale_value,
+      NULL AS brand,
+      NULL AS bank_or_pos,
+      NULL AS bank_name,
+      NULL AS number,
+      NULL AS supplied_by,
+      NULL AS status,
+      r.created_at,
+      NULL AS transaction_type,
+      c.number AS customer_number
+    FROM returns r
+    JOIN customers c ON r.customer_id = c.customer_id
+  `;
+
+  db.query(query, (error, results) => {
+    if (error) {
+      console.error("Error fetching all sales, exchanges, and returns:", error);
+      return res.status(500).json({ error: "Error fetching all sales." });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: "No sales found." });
+    }
+
+    // Log the fetched sales data for debugging
+    console.log("Fetched Sales Data:");
+    results.forEach((sale, index) => {
+      console.log(`Sale ${index + 1}:`, sale);
+    });
+
+    res.status(200).json({
+      message: "All sales fetched successfully!",
+      sales: results
+    });
+  });
+};
+
+
+
+export const addSale = (req, res) => {
+  const {
+    date,
+    customer_name,
+    brand,
+    bank_or_pos,
+    supplied_by,
+    status,
+    number,
+    items
+  } = req.body;
+
+  const itemsDetails = items || [];
+
+  if (
+    !date ||
+    !customer_name ||
+    !number ||
+    !brand ||
+    !bank_or_pos ||
+    itemsDetails.length === 0
+  ) {
+    return res.status(400).json({
+      error: "Please fill out all required fields and add at least one item.",
+    });
+  }
+
+  const sales_id = uuidv4();
+  let processedItems = 0;
+  const totalItems = itemsDetails.length;
+
+  // Check if customer with the same number exists
+  const customerNumberQuery = `
+    SELECT customer_id, customer_name 
+    FROM customers 
+    WHERE number = ?
+  `;
+  db.query(customerNumberQuery, [number], function (error, numberResults) {
+    if (error) {
+      console.error("Error checking customer by number:", error);
+      return res
+        .status(500)
+        .json({ error: "Error checking customer by number." });
+    }
+
+    // Check if customer with the same name exists
+    const customerNameQuery = `
+      SELECT customer_id, number 
+      FROM customers 
+      WHERE customer_name = ?
+    `;
+    db.query(customerNameQuery, [customer_name], function (error, nameResults) {
+      if (error) {
+        console.error("Error checking customer by name:", error);
+        return res
+          .status(500)
+          .json({ error: "Error checking customer by name." });
+      }
+
+      if (nameResults.length > 0) {
+        // Customer name exists, but we need to check the number
+        const existingCustomer = nameResults[0];
+
+        if (existingCustomer.number !== number) {
+          // Name exists but number does not match
+          return res.status(400).json({
+            error: `The customer name "${customer_name}" exists but the phone number provided does not match the existing record. The associated number is "${existingCustomer.number}". Please provide the correct phone number.`,
+          });
+        } else {
+          // The name and number match the same customer, process the sale
+          processSale(existingCustomer.customer_id);
+        }
+      } else if (numberResults.length > 0) {
+        // Number exists, but the name is different
+        const existingCustomerByNumber = numberResults[0];
+        return res.status(400).json({
+          error: `The phone number "${number}" is already associated with another customer: "${existingCustomerByNumber.customer_name}". Please use a different phone number.`,
+        });
+      } else {
+        // No match found, insert the new customer
+        const customer_id = uuidv4(); // Generate a new customer_id
+
+        const insertCustomerQuery = `
+          INSERT INTO customers (customer_id, customer_name, number, created_at)
+          VALUES (?, ?, ?, ?)
+        `;
+        const customerValues = [customer_id, customer_name, number, new Date()];
+
+        db.query(insertCustomerQuery, customerValues, (err) => {
+          if (err) {
+            console.error("Error inserting new customer:", err);
+            return res
+              .status(500)
+              .json({ error: "Error adding new customer." });
+          }
+
+          processSale(customer_id);
+        });
+      }
+    });
+
+    // Function to process sale for each item
+    function processSale(customer_id) {
+      itemsDetails.forEach((item) => {
+        const query = `
+          SELECT id, closing_stock, opening_qty 
+          FROM stock 
+          WHERE description = ? AND record_type = 'day_to_day'
+        `;
+        db.query(query, [item.item], function (error, results) {
+          if (error) {
+            console.error("Error fetching item from stock:", error);
+            return res
+              .status(500)
+              .json({ error: "Error fetching item from stock." });
+          }
+
+          if (results.length > 0) {
+            const item_id = results[0].id;
+            const itemStock = results[0];
+
+            // Log stock details retrieved
+            console.log(
+              `Item: ${item.item}, Closing Stock: ${itemStock.closing_stock}, Opening Qty: ${itemStock.opening_qty}`
+            );
+
+            // Check if the quantity requested exceeds available stock
+            if (item.quantity_purchased > itemStock.closing_stock) {
+              return res.status(400).json({
+                error: `Insufficient stock for item "${item.item}". Available stock is ${itemStock.closing_stock}, but the requested quantity is ${item.quantity_purchased}.`,
+              });
+            }
+
+            if (status === "supplied") {
+              // Update only opening_qty, as closing_stock is a generated column
+              const updatedOpeningStock =
+                itemStock.opening_qty - item.quantity_purchased;
+
+              // Log stock values before update
+              console.log(`Updating Stock for Item: ${item.item}`);
+              console.log(`Updated Opening Qty: ${updatedOpeningStock}`);
+
+              const updateStockQuery = `
+                UPDATE stock 
+                SET opening_qty = ? 
+                WHERE id = ?
+              `;
+              db.query(
+                updateStockQuery,
+                [updatedOpeningStock, item_id],
+                (err) => {
+                  if (err) {
+                    console.error("Error updating stock:", err);
+                    return res
+                      .status(500)
+                      .json({ error: "Error updating stock." });
+                  }
+
+                  // Log successful update
+                  console.log(
+                    `Stock updated successfully for Item: ${item.item}`
+                  );
+                  insertSaleRecord(item_id, customer_id, item);
+                }
+              );
+            } else {
+              // Process sale if status is not 'supplied'
+              insertSaleRecord(item_id, customer_id, item);
+            }
+          } else {
+            console.error(
+              "Item not found in stock with 'day_to_day' record_type"
+            );
+            return res.status(400).json({
+              error: "Item not found in stock with 'day_to_day' record_type.",
+            });
+          }
+        });
+      });
+    }
+
+    // Function to insert sale record
+    function insertSaleRecord(item_id, customer_id, item) {
+      const insertQuery = `
+        INSERT INTO sales (
+          sales_id,
+          date,
+          customer_name,
+          customer_id,
+          item,
+          item_id,
+          amount_per_item,
+          quantity_purchased,
+          amount_paid,
+          brand,
+          bank_or_pos,
+          bank_name,
+          number,
+          supplied_by,
+          status,
+          created_at,
+          transaction_type
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `;
+
+      const amount_paid = item.amount_per_item * item.quantity_purchased;
+      const values = [
+        sales_id,
+        date,
+        customer_name,
+        customer_id,
+        item.item,
+        item_id,
+        item.amount_per_item,
+        item.quantity_purchased,
+        amount_paid,
+        brand,
+        bank_or_pos,
+        null,  // bank_name is null for now, you can update it if needed
+        number,
+        supplied_by,
+        status,
+        new Date(),
+        "sales",
+      ];
+
+      db.query(insertQuery, values, (err) => {
+        if (err) {
+          console.error("Error inserting sale data:", err);
+          return res
+            .status(500)
+            .json({ error: "An error occurred while submitting the sale." });
+        }
+        processedItems++;
+
+        // Check if all items have been processed
+        if (processedItems === totalItems) {
+          // Send the sales_id along with the success message
+          return res.status(201).json({
+            message: "Sale added successfully!",
+            sales_id: sales_id, // Send the sales_id to the frontend
+          });
+        }
+      });
+    }
+  });
+};
+
+// export const getAllSales = (req, res) => {
+//   const query = `
+//     SELECT 
+//       s.sales_id, 
+//       s.date, 
+//       s.customer_name, 
+//       s.customer_id, 
+//       s.item, 
+//       s.amount_per_item, 
+//       s.quantity_purchased, 
+//       s.amount_paid, 
+//       s.total_sale_value,
+//       s.brand,
+//       s.bank_or_pos,
+//       s.bank_name,
+//       s.number,
+//       s.supplied_by,
+//       s.status,
+//       s.created_at,
+//       s.transaction_type,
+//       c.number AS customer_number
+//     FROM sales s
+//     JOIN customers c ON s.customer_id = c.customer_id
+//   `;
+
+//   db.query(query, (error, results) => {
+//     if (error) {
+//       console.error("Error fetching all sales:", error);
+//       return res.status(500).json({ error: "Error fetching all sales." });
+//     }
+
+//     if (results.length === 0) {
+//       return res.status(404).json({ message: "No sales found." });
+//     }
+
+//     // Log the fetched sales data for debugging
+//     console.log("Fetched Sales Data:");
+//     results.forEach((sale, index) => {
+//       console.log(`Sale ${index + 1}:`, sale);
+//     });
+
+//     res.status(200).json({
+//       message: "All sales fetched successfully!",
+//       sales: results,
+//     });
+//   });
+// };
+
+
+export const getSales = (req, res) => {
+  const query = "SELECT * FROM sales ORDER BY created_at DESC";
+
+  pool.query(query, (error, results) => {
+    if (error) {
+      console.error(error);
+      return res.status(500).json({ error: "Failed to retrieve sales" });
+    }
+
+    res.status(200).json(results);
+  });
+};
+
+
+
 export const updateSaleStatus = (req, res) => {
   const { saleId } = req.params;
+  const { supplier } = req.body; // Expecting supplier to be sent in the request body
 
   console.log(`Received request to update sale status for Sale ID: ${saleId}`);
 
@@ -2957,9 +3151,13 @@ export const updateSaleStatus = (req, res) => {
       const sale = saleResults[0];
       console.log(`Sale found: ${JSON.stringify(sale)}`);
 
-      const updateSaleQuery =
-        "UPDATE sales SET status = 'supplied' WHERE sales_id = ?";
-      db.query(updateSaleQuery, [saleId], (err) => {
+      // Update both the status and supplied_by in a single query
+      const updateSaleQuery = `
+        UPDATE sales 
+        SET status = 'supplied', supplied_by = ? 
+        WHERE sales_id = ?
+      `;
+      db.query(updateSaleQuery, [supplier, saleId], (err) => {
         if (err) {
           console.error("Error executing updateSaleQuery:", err);
           return db.rollback(() =>
@@ -2998,7 +3196,7 @@ export const updateSaleStatus = (req, res) => {
                     .json({ error: "Error committing transaction." })
                 );
               }
-              res.send("Sale status updated to supplied and stock adjusted.");
+              res.send("Sale status updated to supplied, supplier noted, and stock adjusted.");
             });
           }
         );
