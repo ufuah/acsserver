@@ -3639,6 +3639,105 @@ const updateStockAfterSale = async (item_id, quantity_purchased) => {
 //   });
 // };
 
+// export const getAllSales = (req, res) => {
+//   const query = `
+//     SELECT
+//       'sale' AS record_type,
+//       s.sales_id AS sales_id,  -- Using sales_id from the sales table
+//       s.date,
+//       s.customer_name,
+//       s.customer_id,
+//       s.item,
+//       s.amount_per_item,
+//       s.quantity_purchased AS quantity,
+//       s.amount_paid,
+//       s.total_sale_value,
+//       s.brand,
+//       s.bank_or_pos,
+//       s.bank_name,
+//       s.number,
+//       s.supplied_by,
+//       s.status,
+//       s.created_at,
+//       s.transaction_type,
+//       c.number AS customer_number
+//     FROM sales s
+//     JOIN customers c ON s.customer_id = c.customer_id
+
+//     UNION ALL
+
+//     SELECT
+//       'exchange' AS record_type,
+//       e.exchange_id AS sales_id,  -- Using exchange_id from the exchanges table
+//       e.date,
+//       e.customer_name,
+//       e.customer_id,
+//       e.item,
+//       NULL AS amount_per_item,
+//       e.quantity AS quantity,  -- Using e.quantity for exchanged items
+//       NULL AS amount_paid,
+//       NULL AS total_sale_value,
+//       NULL AS brand,
+//       NULL AS bank_or_pos,
+//       NULL AS bank_name,
+//       NULL AS number,
+//       NULL AS supplied_by,
+//       NULL AS status,
+//       e.created_at,
+//       NULL AS transaction_type,
+//       c.number AS customer_number
+//     FROM exchanges e
+//     JOIN customers c ON e.customer_id = c.customer_id
+
+//     UNION ALL
+
+//     SELECT
+//       'return' AS record_type,
+//       r.return_id AS sales_id,  -- Using return_id from the returns table
+//       r.date,
+//       r.customer_name,
+//       r.customer_id,
+//       r.item,
+//       NULL AS amount_per_item,
+//       r.quantity AS quantity,  -- Using r.quantity for returned items
+//       NULL AS amount_paid,
+//       NULL AS total_sale_value,
+//       NULL AS brand,
+//       NULL AS bank_or_pos,
+//       NULL AS bank_name,
+//       NULL AS number,
+//       NULL AS supplied_by,
+//       NULL AS status,
+//       r.created_at,
+//       NULL AS transaction_type,
+//       c.number AS customer_number
+//     FROM returns r
+//     JOIN customers c ON r.customer_id = c.customer_id
+//   `;
+
+//   db.query(query, (error, results) => {
+//     if (error) {
+//       console.error("Error fetching all sales, exchanges, and returns:", error);
+//       return res.status(500).json({ error: "Error fetching all sales." });
+//     }
+
+//     if (results.length === 0) {
+//       return res.status(404).json({ message: "No sales found." });
+//     }
+
+//     // Log the fetched sales data for debugging
+//     console.log("Fetched Sales Data:");
+//     results.forEach((sale, index) => {
+//       console.log(`Sale ${index + 1}:`, sale);
+//     });
+
+//     res.status(200).json({
+//       message: "All sales fetched successfully!",
+//       sales: results,
+//     });
+//   });
+// };
+
 export const getAllSales = (req, res) => {
   const query = `
     SELECT
@@ -3649,7 +3748,7 @@ export const getAllSales = (req, res) => {
       s.customer_id,
       s.item,
       s.amount_per_item,
-      s.quantity_purchased AS quantity,
+      s.quantity_purchased,  -- Directly using quantity_purchased for sales
       s.amount_paid,
       s.total_sale_value,
       s.brand,
@@ -3659,7 +3758,7 @@ export const getAllSales = (req, res) => {
       s.supplied_by,
       s.status,
       s.created_at,
-      s.transaction_type,
+      s.transaction_type,  -- Using transaction_type from the sales table
       c.number AS customer_number
     FROM sales s
     JOIN customers c ON s.customer_id = c.customer_id
@@ -3684,7 +3783,7 @@ export const getAllSales = (req, res) => {
       NULL AS supplied_by,
       NULL AS status,
       e.created_at,
-      NULL AS transaction_type,
+      'exchange' AS transaction_type,  -- Set transaction_type for exchanges
       c.number AS customer_number
     FROM exchanges e
     JOIN customers c ON e.customer_id = c.customer_id
@@ -3709,7 +3808,7 @@ export const getAllSales = (req, res) => {
       NULL AS supplied_by,
       NULL AS status,
       r.created_at,
-      NULL AS transaction_type,
+      'return' AS transaction_type,  -- Set transaction_type for returns
       c.number AS customer_number
     FROM returns r
     JOIN customers c ON r.customer_id = c.customer_id
@@ -3737,7 +3836,6 @@ export const getAllSales = (req, res) => {
     });
   });
 };
-
 
 
 export const addSale = (req, res) => {
