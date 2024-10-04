@@ -25,14 +25,14 @@ router.get('/exchanges', getAllExchanges);
 router.get('/returns', getAllReturns);
 
 // Add a new sale
-router.post("/add", addSale);
+router.post("/sales/add", addSale);
 
 // update sale  status
-router.put("/:saleId/status", updateSaleStatus);
+router.put("/sales/:saleId/status", updateSaleStatus);
 
-router.post("/return", Return);
+router.post("/return/add", Return);
  
-router.post('/exchange', Exchange);
+router.post('/exchange/add', Exchange);
 
 // Get all customers
 router.get("/customers", getAllCustomers);
