@@ -4956,15 +4956,51 @@ export const getAllCustomers = (req, res) => {
 //   });
 // };
 
+// export const getCustomerByName = (req, res) => {
+//   console.log("Request received at /api/customers/:customer_name");
+//   console.log("Request params:", req.params);
+
+//   const { customer_name } = req.params;
+
+//   if (!customer_name) {
+//     console.log("Customer name is missing");
+//     return res.status(400).json({ error: "Customer name is required" });
+//   }
+
+//   const query = "SELECT * FROM customers WHERE customer_name = ?";
+
+//   db.query(query, [customer_name], (err, results) => {
+//     if (err) {
+//       console.error("Error fetching customer by name:", err);
+//       return res.status(500).json({ error: err.message });
+//     }
+
+//     if (results.length === 0) {
+//       console.log("Customer not found:", customer_name);
+//       return res.status(404).json({ error: "Customer not found" });
+//     }
+
+//     console.log("Customer found:", results[0]);
+//     res.json(results[0]);
+//   });
+// };
+
+
 export const getCustomerByName = (req, res) => {
   console.log("Request received at /api/customers/:customer_name");
   console.log("Request params:", req.params);
 
   const { customer_name } = req.params;
+  const { new_phone_number } = req.body; // Assuming new phone number is sent in the request body
 
   if (!customer_name) {
     console.log("Customer name is missing");
     return res.status(400).json({ error: "Customer name is required" });
+  }
+
+  if (!new_phone_number) {
+    console.log("New phone number is missing");
+    return res.status(400).json({ error: "New phone number is required" });
   }
 
   const query = "SELECT * FROM customers WHERE customer_name = ?";
@@ -4981,9 +5017,28 @@ export const getCustomerByName = (req, res) => {
     }
 
     console.log("Customer found:", results[0]);
-    res.json(results[0]);
+
+    // Update the customer's phone number
+    const updateQuery = "UPDATE customers SET phone_number = ? WHERE customer_name = ?";
+
+    db.query(updateQuery, [new_phone_number, customer_name], (err, updateResults) => {
+      if (err) {
+        console.error("Error updating customer's phone number:", err);
+        return res.status(500).json({ error: err.message });
+      }
+
+      console.log(`Customer's phone number updated to: ${new_phone_number}`);
+      res.json({
+        message: "Customer's phone number updated successfully",
+        customer: {
+          ...results[0],
+          phone_number: new_phone_number,
+        },
+      });
+    });
   });
 };
+
 
 export const getSaleById = (req, res) => {
   const { saleId } = req.params; // Get the saleId from request parameters
