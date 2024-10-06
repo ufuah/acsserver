@@ -4790,6 +4790,14 @@ export const addSale = (req, res) => {
         const existingCustomer = nameResults[0];
 
         if (existingCustomer.number !== number) {
+          // Check if the phone number belongs to someone else
+          if (numberResults.length > 0) {
+            const existingCustomerByNumber = numberResults[0];
+            return res.status(400).json({
+              error: `The phone number "${number}" is already associated with another customer: "${existingCustomerByNumber.customer_name}". Please use a different phone number.`,
+            });
+          }
+
           // Update customer's phone number if it's different
           console.log(
             `Customer name "${customer_name}" exists, but the number provided does not match. Updating the phone number to "${number}".`
