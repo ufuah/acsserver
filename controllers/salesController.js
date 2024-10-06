@@ -4723,8 +4723,7 @@ export const getAllExchanges = (req, res) => {
 //     }
 //   });
 // };
-import { v4 as uuidv4 } from "uuid";
-import db from "../db"; // Import your database connection
+
 
 export const addSale = (req, res) => {
   const {
