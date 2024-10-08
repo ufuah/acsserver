@@ -4101,6 +4101,7 @@ export const getAllSales = (req, res) => {
       s.total_sale_value,
       s.created_at,
       s.transaction_type,
+      s.category,
       c.number AS customer_number
     FROM sales s
     JOIN customers c ON s.customer_id = c.customer_id
@@ -4136,6 +4137,7 @@ export const getAllReturns = (req, res) => {
       r.quantity,
       r.created_at,
       r.transaction_type,
+      r.category,
       r.amount_paid,
       r.amount_per_item,
       r.refund_amount,
@@ -4176,6 +4178,7 @@ export const getAllExchanges = (req, res) => {
       e.created_at,
       e.updated,
       e.transaction_type,
+      e.category,
       e.amount_paid,
       e.amount_per_item,
       e.refund_amount,
