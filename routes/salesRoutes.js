@@ -30,9 +30,9 @@ router.post("/sales/add", addSale);
 // update sale  status
 router.put("/sales/:saleId/status", updateSaleStatus);
 
-router.post("/return/add", Return);
+router.post("/returns/add", Return);
  
-router.post('/exchange/add', Exchange);
+router.post('/exchanges/add', Exchange);
 
 // Get all customers
 router.get("/customers", getAllCustomers);
