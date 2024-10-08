@@ -4080,6 +4080,50 @@ const updateStockAfterSale = async (item_id, quantity_purchased) => {
 // };
 
 // salesController.js
+// export const getAllSales = (req, res) => {
+//   const query = `
+//     SELECT
+//       s.sales_id AS sales_id,
+//       s.item_id,
+//       s.date,
+//       s.customer_name,
+//       s.customer_id,
+//       s.item,
+//       s.amount_per_item,
+//       s.quantity_purchased,
+//       s.amount_paid,
+//       s.brand,
+//       s.bank_or_pos,
+//       s.bank_name,
+//       s.number,
+//       s.supplied_by,
+//       s.status,
+//       s.total_sale_value,
+//       s.created_at,
+//       s.transaction_type,
+//       s.category,
+//       c.number AS customer_number
+//     FROM sales s
+//     JOIN customers c ON s.customer_id = c.customer_id
+//   `;
+
+//   db.query(query, (error, results) => {
+//     if (error) {
+//       console.error("Error fetching sales:", error);
+//       return res.status(500).json({ error: "Error fetching sales." });
+//     }
+
+//     if (results.length === 0) {
+//       return res.status(404).json({ message: "No sales found." });
+//     }
+
+//     res.status(200).json({
+//       message: "Sales fetched successfully!",
+//       sales: results,
+//     });
+//   });
+// };
+
 export const getAllSales = (req, res) => {
   const query = `
     SELECT
@@ -4109,12 +4153,13 @@ export const getAllSales = (req, res) => {
 
   db.query(query, (error, results) => {
     if (error) {
-      console.error("Error fetching sales:", error);
+      console.error("Error fetching sales:", error, query);
       return res.status(500).json({ error: "Error fetching sales." });
     }
 
+    // Return empty array if no sales found instead of 404
     if (results.length === 0) {
-      return res.status(404).json({ message: "No sales found." });
+      return res.status(200).json({ message: "No sales found.", sales: [] });
     }
 
     res.status(200).json({
@@ -4124,7 +4169,47 @@ export const getAllSales = (req, res) => {
   });
 };
 
+
 // returnsController.js
+// export const getAllReturns = (req, res) => {
+//   const query = `
+//     SELECT
+//       r.return_id AS return_id,
+//       r.customer_name,
+//       r.customer_id,
+//       r.date,
+//       r.item_id,
+//       r.item,
+//       r.quantity,
+//       r.created_at,
+//       r.transaction_type,
+//       r.category,
+//       r.amount_paid,
+//       r.amount_per_item,
+//       r.refund_amount,
+//       r.payback,
+//       c.number AS customer_number
+//     FROM returns r
+//     JOIN customers c ON r.customer_id = c.customer_id
+//   `;
+
+//   db.query(query, (error, results) => {
+//     if (error) {
+//       console.error("Error fetching returns:", error);
+//       return res.status(500).json({ error: "Error fetching returns." });
+//     }
+
+//     if (results.length === 0) {
+//       return res.status(404).json({ message: "No returns found." });
+//     }
+
+//     res.status(200).json({
+//       message: "Returns fetched successfully!",
+//       returns: results,
+//     });
+//   });
+// };
+
 export const getAllReturns = (req, res) => {
   const query = `
     SELECT
@@ -4149,12 +4234,13 @@ export const getAllReturns = (req, res) => {
 
   db.query(query, (error, results) => {
     if (error) {
-      console.error("Error fetching returns:", error);
+      console.error("Error fetching returns:", error, query);
       return res.status(500).json({ error: "Error fetching returns." });
     }
 
+    // Return empty array if no returns found instead of 404
     if (results.length === 0) {
-      return res.status(404).json({ message: "No returns found." });
+      return res.status(200).json({ message: "No returns found.", returns: [] });
     }
 
     res.status(200).json({
@@ -4164,7 +4250,48 @@ export const getAllReturns = (req, res) => {
   });
 };
 
+
 // exchangesController.js
+// export const getAllExchanges = (req, res) => {
+//   const query = `
+//     SELECT
+//       e.exchange_id AS exchange_id,
+//       e.customer_name,
+//       e.customer_id,
+//       e.date,
+//       e.item_id,
+//       e.item,
+//       e.quantity,
+//       e.created_at,
+//       e.updated,
+//       e.transaction_type,
+//       e.category,
+//       e.amount_paid,
+//       e.amount_per_item,
+//       e.refund_amount,
+//       e.payback,
+//       c.number AS customer_number
+//     FROM exchanges e
+//     JOIN customers c ON e.customer_id = c.customer_id
+//   `;
+
+//   db.query(query, (error, results) => {
+//     if (error) {
+//       console.error("Error fetching exchanges:", error);
+//       return res.status(500).json({ error: "Error fetching exchanges." });
+//     }
+
+//     if (results.length === 0) {
+//       return res.status(404).json({ message: "No exchanges found." });
+//     }
+
+//     res.status(200).json({
+//       message: "Exchanges fetched successfully!",
+//       exchanges: results,
+//     });
+//   });
+// };
+
 export const getAllExchanges = (req, res) => {
   const query = `
     SELECT
@@ -4190,12 +4317,13 @@ export const getAllExchanges = (req, res) => {
 
   db.query(query, (error, results) => {
     if (error) {
-      console.error("Error fetching exchanges:", error);
+      console.error("Error fetching exchanges:", error, query);
       return res.status(500).json({ error: "Error fetching exchanges." });
     }
 
+    // Return empty array if no exchanges found instead of 404
     if (results.length === 0) {
-      return res.status(404).json({ message: "No exchanges found." });
+      return res.status(200).json({ message: "No exchanges found.", exchanges: [] });
     }
 
     res.status(200).json({
@@ -4204,6 +4332,7 @@ export const getAllExchanges = (req, res) => {
     });
   });
 };
+
 
 
 
