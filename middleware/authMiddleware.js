@@ -179,4 +179,4 @@ export const lockMiddleware = async (req, res, next) => {
 
 
 // Combined Middleware for Auth and Lock
-export const authAndLockMiddleware = [authMiddleware, lockMiddleware];
+// export const authAndLockMiddleware = [authMiddleware, lockMiddleware];
