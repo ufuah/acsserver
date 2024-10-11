@@ -28,7 +28,7 @@ router.get('/returns', getAllReturns);
 router.post("/sales/add", addSale);
 
 // update sale  status
-router.put("/sales/:saleId/status", updateSaleStatus);
+router.put("/sales/status/:saleId", updateSaleStatus);
 
 router.post("/returns/add", Return);
  
