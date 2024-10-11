@@ -4957,7 +4957,7 @@ export const getAllExchanges = (req, res) => {
 export const updateSaleStatus = (req, res) => {
   const { saleId } = req.params;
   const { supplier } = req.body; // Expecting supplier to be sent in the request body
-
+console.log(supplier)
   console.log(`Received request to update sale status for Sale ID: ${saleId}`);
 
   db.beginTransaction((err) => {
