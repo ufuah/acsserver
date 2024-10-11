@@ -4957,8 +4957,9 @@ export const getAllExchanges = (req, res) => {
 export const updateSaleStatus = (req, res) => {
   const { saleId } = req.params;
   const { supplier } = req.body; // Expecting supplier to be sent in the request body
-console.log(supplier)
+
   console.log(`Received request to update sale status for Sale ID: ${saleId}`);
+  console.log(`Supplier provided: ${supplier}`); // Log the supplier to verify it's being received correctly
 
   db.beginTransaction((err) => {
     if (err) {
@@ -5048,6 +5049,7 @@ console.log(supplier)
     });
   });
 };
+
 
 
 export const addSale = (req, res) => {
