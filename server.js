@@ -44,7 +44,7 @@ app.use(
 // Routes
 app.use("/api/categories", categoriesRoutes);
 app.use("/api/stocks", stocksRoutes);
-app.use("/api/transations", salesRoutes);
+app.use("/api/transactions", salesRoutes);
 app.use("/api/auth", authRoutes);
 
 

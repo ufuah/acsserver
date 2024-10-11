@@ -5143,6 +5143,100 @@ export const getSales = (req, res) => {
   });
 };
 
+// export const updateSaleStatus = (req, res) => {
+//   const { saleId } = req.params;
+//   const { supplier } = req.body; // Expecting supplier to be sent in the request body
+
+//   console.log(`Received request to update sale status for Sale ID: ${saleId}`);
+
+//   db.beginTransaction((err) => {
+//     if (err) {
+//       console.error("Transaction start error:", err);
+//       return res.status(500).json({ error: "Error starting transaction." });
+//     }
+
+//     const checkSaleQuery = `
+//       SELECT s.sales_id, s.item_id, s.quantity_purchased, s.status, s.number, st.opening_qty
+//       FROM sales s
+//       JOIN stock st ON s.item_id = st.id
+//       WHERE s.sales_id = ? AND s.status = 'pending'
+//     `;
+
+//     db.query(checkSaleQuery, [saleId], (err, saleResults) => {
+//       if (err) {
+//         console.error("Error executing checkSaleQuery:", err);
+//         return db.rollback(() =>
+//           res.status(500).json({ error: "Error checking sale." })
+//         );
+//       }
+
+//       if (saleResults.length === 0) {
+//         console.error("Sale not found or already supplied.");
+//         return db.rollback(() =>
+//           res.status(400).json({ error: "Sale not found or already supplied." })
+//         );
+//       }
+
+//       const sale = saleResults[0];
+//       console.log(`Sale found: ${JSON.stringify(sale)}`);
+
+//       // Update both the status and supplied_by in a single query
+//       const updateSaleQuery = `
+//         UPDATE sales 
+//         SET status = 'supplied', supplied_by = ? 
+//         WHERE sales_id = ?
+//       `;
+//       db.query(updateSaleQuery, [supplier, saleId], (err) => {
+//         if (err) {
+//           console.error("Error executing updateSaleQuery:", err);
+//           return db.rollback(() =>
+//             res.status(500).json({ error: "Error updating sale status." })
+//           );
+//         }
+
+//         // Update the opening_qty only, don't touch the closing_stock
+//         const updateStockQuery = `
+//           UPDATE stock
+//           SET opening_qty = opening_qty - ?
+//           WHERE id = ?
+//         `;
+
+//         db.query(
+//           updateStockQuery,
+//           [sale.quantity_purchased, sale.item_id],
+//           (err) => {
+//             if (err) {
+//               console.error("Error executing updateStockQuery:", err);
+//               return db.rollback(() =>
+//                 res.status(500).json({ error: "Error updating stock." })
+//               );
+//             }
+
+//             console.log(
+//               `Stock updated. ${sale.quantity_purchased} units subtracted from item ID ${sale.item_id}.`
+//             );
+
+//             db.commit((err) => {
+//               if (err) {
+//                 console.error("Transaction commit error:", err);
+//                 return db.rollback(() =>
+//                   res
+//                     .status(500)
+//                     .json({ error: "Error committing transaction." })
+//                 );
+//               }
+//               res.send(
+//                 "Sale status updated to supplied, supplier noted, and stock adjusted."
+//               );
+//             });
+//           }
+//         );
+//       });
+//     });
+//   });
+// };
+
+
 export const updateSaleStatus = (req, res) => {
   const { saleId } = req.params;
   const { supplier } = req.body; // Expecting supplier to be sent in the request body
@@ -5180,7 +5274,7 @@ export const updateSaleStatus = (req, res) => {
       const sale = saleResults[0];
       console.log(`Sale found: ${JSON.stringify(sale)}`);
 
-      // Update both the status and supplied_by in a single query
+      // Corrected update query
       const updateSaleQuery = `
         UPDATE sales 
         SET status = 'supplied', supplied_by = ? 
@@ -5194,7 +5288,7 @@ export const updateSaleStatus = (req, res) => {
           );
         }
 
-        // Update the opening_qty only, don't touch the closing_stock
+        // Update the opening_qty
         const updateStockQuery = `
           UPDATE stock
           SET opening_qty = opening_qty - ?
