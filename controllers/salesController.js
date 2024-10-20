@@ -5832,6 +5832,179 @@ export const getSales = (req, res) => {
 //   });
 // };
 
+// export const Exchange = (req, res) => {
+//   const { customer, items } = req.body;
+//   const { customer_name, number, date } = customer;
+
+//   // Validate incoming request data
+//   if (!customer_name || !number || !date || !items || items.length === 0) {
+//     return res.status(400).json({ error: "Missing required fields" });
+//   }
+
+//   db.beginTransaction((err) => {
+//     if (err) {
+//       console.error("Transaction start error:", err);
+//       return res.status(500).json({ error: "Transaction start failed" });
+//     }
+
+//     // Check if the customer exists
+//     const checkCustomerQuery = `
+//       SELECT customer_id FROM customers WHERE number = ?
+//     `;
+//     db.query(checkCustomerQuery, [number], (err, customerResults) => {
+//       if (err) {
+//         console.error("Error executing checkCustomerQuery:", err);
+//         return db.rollback(() =>
+//           res.status(500).json({ error: "Error checking customer" })
+//         );
+//       }
+
+//       let customerId;
+//       if (customerResults.length === 0) {
+//         // Customer does not exist, insert them
+//         const insertCustomerQuery = `
+//           INSERT INTO customers (customer_id, customer_name, number, created_at)
+//           VALUES (UUID(), ?, ?, NOW())
+//         `;
+//         db.query(insertCustomerQuery, [customer_name, number], (err) => {
+//           if (err) {
+//             console.error("Error inserting customer:", err);
+//             return db.rollback(() =>
+//               res.status(500).json({ error: "Error inserting customer" })
+//             );
+//           }
+
+//           // Fetch the new customer's ID
+//           const fetchCustomerIdQuery = `SELECT customer_id FROM customers WHERE number = ?`;
+//           db.query(fetchCustomerIdQuery, [number], (err, newCustomerResult) => {
+//             if (err) {
+//               console.error("Error fetching customer ID:", err);
+//               return db.rollback(() =>
+//                 res.status(500).json({ error: "Error fetching customer ID" })
+//               );
+//             }
+
+//             customerId = newCustomerResult[0].customer_id;
+//             processItems(customerId);
+//           });
+//         });
+//       } else {
+//         // Customer exists, use their ID
+//         customerId = customerResults[0].customer_id;
+//         processItems(customerId);
+//       }
+//     });
+
+//     const processItems = (customerId) => {
+//       let itemProcessed = 0;
+
+//       const processNextItem = () => {
+//         if (itemProcessed >= items.length) {
+//           db.commit((err) => {
+//             if (err) {
+//               console.error("Transaction commit error:", err);
+//               return db.rollback(() =>
+//                 res.status(500).json({ error: "Error committing transaction." })
+//               );
+//             }
+//             res.send("Exchange added successfully.");
+//           });
+//           return;
+//         }
+
+//         const item = items[itemProcessed];
+//         const { item: itemName, qty, amount_per_item, category = "water_collector" } = item; // Set default category
+
+//         const amount_paid = amount_per_item * qty;
+//         const refund_amount = amount_paid;
+//         const payback = refund_amount;
+
+//         // Check stock for the item
+//         const checkStockQuery = `
+//           SELECT id, closing_stock, opening_qty
+//           FROM stock
+//           WHERE description = ? AND record_type = 'day_to_day'
+//         `;
+//         db.query(checkStockQuery, [itemName], (err, stockResults) => {
+//           if (err) {
+//             console.error("Error executing checkStockQuery:", err);
+//             return db.rollback(() =>
+//               res.status(500).json({ error: "Error checking stock" })
+//             );
+//           }
+
+//           if (stockResults.length === 0) {
+//             console.error(`Item '${itemName}' not found in stock.`);
+//             return db.rollback(() =>
+//               res
+//                 .status(400)
+//                 .json({ error: `Item '${itemName}' not found in stock.` })
+//             );
+//           }
+
+//           const stockItem = stockResults[0];
+//           const { id } = stockItem;
+
+//           const exchangeId = uuidv4();
+
+//           // Insert exchange details
+//           const insertExchangeQuery = `
+//             INSERT INTO exchanges (exchange_id, date, customer_id, customer_name, item_id, item, quantity, amount_per_item, amount_paid, refund_amount, payback, category)
+//             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+//           `;
+//           db.query(
+//             insertExchangeQuery,
+//             [
+//               exchangeId,
+//               date,
+//               customerId,
+//               customer_name,
+//               id,
+//               itemName,
+//               qty,
+//               amount_per_item,
+//               amount_paid,
+//               refund_amount,
+//               payback,
+//               category // Insert category here
+//             ],
+//             (err) => {
+//               if (err) {
+//                 console.error("Error executing insertExchangeQuery:", err);
+//                 return db.rollback(() =>
+//                   res.status(500).json({ error: "Error inserting exchange" })
+//                 );
+//               }
+
+//               // Update stock
+//               const updateStockQuery = `
+//               UPDATE stock
+//               SET opening_qty = opening_qty - ?
+//               WHERE id = ?
+//             `;
+//               db.query(updateStockQuery, [qty, id], (err) => {
+//                 if (err) {
+//                   console.error("Error executing updateStockQuery:", err);
+//                   return db.rollback(() =>
+//                     res.status(500).json({ error: "Error updating stock" })
+//                   );
+//                 }
+
+//                 itemProcessed++;
+//                 processNextItem();
+//               });
+//             }
+//           );
+//         });
+//       };
+
+//       processNextItem();
+//     };
+//   });
+// };
+
+
+
 export const Exchange = (req, res) => {
   const { customer, items } = req.body;
   const { customer_name, number, date } = customer;
@@ -5840,6 +6013,10 @@ export const Exchange = (req, res) => {
   if (!customer_name || !number || !date || !items || items.length === 0) {
     return res.status(400).json({ error: "Missing required fields" });
   }
+
+  // Convert the date from 'DD/MM/YYYY' to 'YYYY-MM-DD'
+  const [day, month, year] = date.split('/'); // Split the date string
+  const formattedDate = `${year}-${month}-${day}`; // Create the formatted date
 
   db.beginTransaction((err) => {
     if (err) {
@@ -5956,7 +6133,7 @@ export const Exchange = (req, res) => {
             insertExchangeQuery,
             [
               exchangeId,
-              date,
+              formattedDate, // Use the formatted date here
               customerId,
               customer_name,
               id,
@@ -6002,6 +6179,7 @@ export const Exchange = (req, res) => {
     };
   });
 };
+
 
 
 // export const Return = (req, res) => {
